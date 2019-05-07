@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"learngo/retriever/mock"
-	"learngo/retriever/real"
+	"golearn/retriever/mock"
+	"golearn/retriever/real"
 	"time"
 )
 
