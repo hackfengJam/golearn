@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"learngo/crawler/engine"
+	"golearn/crawler/engine"
 	"regexp"
 )
 

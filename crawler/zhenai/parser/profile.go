@@ -1,6 +1,6 @@
 package parser
 
-import "learngo/crawler/engine"
+import "golearn/crawler/engine"
 
 const ageRe = ``
 

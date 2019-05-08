@@ -1,9 +1,9 @@
 package main
 
 import (
-	"learngo/crawler/engine"
-	"learngo/crawler/scheduler"
-	"learngo/crawler/zhenai/parser"
+	"golearn/crawler/engine"
+	"golearn/crawler/scheduler"
+	"golearn/crawler/zhenai/parser"
 )
 
 //func main() {

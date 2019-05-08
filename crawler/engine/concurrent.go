@@ -1,8 +1,6 @@
 package engine
 
-import (
-	"log"
-)
+import "log"
 
 type ConcurrentEngine struct {
 	Scheduler   Scheduler
@@ -41,6 +39,7 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 		}
 	}
 }
+
 //
 //func (e *ConcurrentEngine) Run(seeds ...Request) {
 //
@@ -85,7 +84,7 @@ func createWorker(out chan ParseResult, s Scheduler) {
 	}()
 
 }
-//
+
 //func createWorker(
 //	in chan Request, out chan ParseResult) {
 //	go func() {
