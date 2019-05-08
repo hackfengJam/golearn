@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,13 +40,12 @@ func (fetcher *Fetcher) init(spiderUrl string) {
 	}
 }
 
-func (fetcher *Fetcher) Run(spiderUrl string) <-chan byte {
+func (fetcher *Fetcher) Run(spiderUrl string) ([]byte, error) {
 	fetcher.init(spiderUrl)
-	data := fetcher.getUrl()
-	return data
+	return fetcher.getUrl()
 }
 
-func (fetcher *Fetcher) getUrl() <-chan byte {
+func (fetcher *Fetcher) getUrl() ([]byte, error) {
 	request, err := http.NewRequest(
 		http.MethodGet,
 		fetcher.SpiderUrl, nil)
@@ -56,69 +54,35 @@ func (fetcher *Fetcher) getUrl() <-chan byte {
 	}
 	client := http.DefaultClient
 	fetcher.Client = client
+	fmt.Println("send: ", fetcher.SpiderUrl)
 	resp, err := fetcher.Client.Do(request)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(resp.Body)
 	defer resp.Body.Close()
-	return NetworkSource(resp)
-}
-func NetworkSource(resp *http.Response) <-chan byte {
-	out := make(chan byte)
-	go func() {
-		r := ReaderSource(bufio.NewReader(resp.Body), -1)
-		for v := range r {
-			out <- v
-		}
-		close(out)
-	}()
-	return out
-}
-
-func ReaderSource(reader io.Reader, chunkSize int) <-chan byte {
-	out := make(chan byte, 1024)
-	go func() {
-		buffer := make([]byte, 8)
-		bytesRead := 0
-		for {
-			n, err := reader.Read(buffer)
-			bytesRead += n
-			if n > 0 {
-				for _, v := range buffer {
-					out <- v
-				}
-			}
-			if err != nil ||
-				(chunkSize != -1 && bytesRead >= chunkSize) {
-				break
-			}
-		}
-		close(out)
-	}()
-	return out
+	return ioutil.ReadAll(resp.Body)
 }
 
 func main() {
 	fetcher := NewFetcher()
 	uids := []string{"NWQ8NsMsUo3HwFCJrMueaA", "9z9YyZkccMtfekvZpKLQSH", "uDKxEF2mLwDuiSMmcrcxFf", "nNSHZXk35wjPeaQ9BC4Fi3"}
-	spiderUrl := "http://testing.ecams-backend.cloudcare.cn/ecams/detector_data?cloud_account_unique_id=%s"
-	results := []<-chan byte{}
+	spiderUrl := "http://testing.ecams-backend.cloudcare.cn:8087/ecams/detector_data?cloud_account_unique_id=%s"
+	results := make(chan []byte)
+
 	for _, uid := range uids {
-		data := fetcher.Run(fmt.Sprintf(spiderUrl, uid))
-		results = append(results, data)
+		go func(uid string) {
+			v, err := fetcher.Run(fmt.Sprintf(spiderUrl, uid))
+			if err != nil {
+				panic(err)
+			}
+			results <- v
+		}(uid)
+	}
+	for v := range results {
+		for _, i := range v {
+			fmt.Print(string(i))
+		}
+		fmt.Println()
 	}
 
-	for {
-		select {
-		case v := <-results[0]:
-			fmt.Println("0:=", v)
-		case v := <-results[1]:
-			fmt.Println("1:=", v)
-		case v := <-results[2]:
-			fmt.Println("2:=", v)
-		case v := <-results[3]:
-			fmt.Println("3:=", v)
-		}
-	}
 }
