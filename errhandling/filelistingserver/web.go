@@ -1,7 +1,7 @@
 package main
 
 import (
-	"learngo/errhandling/filelistingserver/filelisting"
+	"golearn/errhandling/filelistingserver/filelisting"
 	"log"
 	"net/http"
 	"os"

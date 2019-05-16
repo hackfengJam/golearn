@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"learngo/functional/fib"
+	"golearn/functional/fib"
 	"os"
 )
 
