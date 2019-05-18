@@ -1,9 +1,9 @@
 package main
 
 import (
-	"golearn/crawler/engine"
-	"golearn/crawler/scheduler"
-	"golearn/crawler/zhenai/parser"
+	"golearn/project/crawler/engine"
+	"golearn/project/crawler/scheduler"
+	"golearn/project/crawler/zhenai/parser"
 )
 
 //func main() {

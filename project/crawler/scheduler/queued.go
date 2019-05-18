@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"golearn/crawler/engine"
+	"golearn/project/crawler/engine"
 )
 
 type QueuedScheduler struct {

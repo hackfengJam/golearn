@@ -1,6 +1,8 @@
 package engine
 
-import "log"
+import (
+	"log"
+)
 
 type ConcurrentEngine struct {
 	Scheduler   Scheduler

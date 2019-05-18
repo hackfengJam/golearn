@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"golearn/crawler/fetcher"
+	"golearn/project/crawler/fetcher"
 	"log"
 )
 
