@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golearn/project/owehackfun/crontab/master"
 	"runtime"
+	"time"
 )
 
 var (
@@ -40,7 +41,7 @@ func main() {
 	}
 
 	// 任务管理器
-	if err = master.InitConfig(confFile); err != nil {
+	if err = master.InitJobMgr(); err != nil {
 		goto ERR
 	}
 
@@ -50,6 +51,10 @@ func main() {
 	}
 
 	// 正常退出
+	for {
+		time.Sleep(1 * time.Second)
+	}
+
 	return
 
 ERR:

@@ -1,7 +1,10 @@
 package master
 
 import (
+	"context"
+	"encoding/json"
 	"go.etcd.io/etcd/clientv3"
+	"golearn/project/owehackfun/crontab/common"
 	"time"
 )
 
@@ -50,4 +53,38 @@ func InitJobMgr() (err error) {
 
 	return
 
+}
+
+func (jobMgr *JobMgr) SaveJob(job *common.Job) (oldJob *common.Job, err error) {
+	// 把任务保存到 /cron/jobs/任务名 -> json
+
+	var (
+		jobKey    string
+		jobValue  []byte
+		putResp   *clientv3.PutResponse
+		oldJobObj common.Job
+	)
+
+	// etcd 的保存 key
+	jobKey = "/cron/jobs/" + job.Name
+	if jobValue, err = json.Marshal(job); err != nil {
+		return
+	}
+	//fmt.Println(string(jobValue))
+
+	// 保存到 etcd
+	if putResp, err = jobMgr.kv.Put(context.TODO(), jobKey, string(jobValue), clientv3.WithPrevKV()); err != nil {
+		return
+	}
+
+	// 如果是更新，那么返回旧值
+	if putResp.PrevKv != nil {
+		// 对旧值做一个反序列化
+		if err = json.Unmarshal(putResp.PrevKv.Value, &oldJobObj); err != nil {
+			err = nil
+			return
+		}
+	}
+	oldJob = &oldJobObj
+	return
 }
