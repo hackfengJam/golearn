@@ -38,6 +38,8 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 
 	// 2. 取表单中的 job 字段
 	//postJob = req.PostForm.Get("job")
+
+	// 这里修改成了 读取 json 字符串
 	if postJob, err = ioutil.ReadAll(req.Body); err != nil {
 		goto ERR
 	}
@@ -65,6 +67,100 @@ ERR:
 	}
 }
 
+// 删除任务接口
+// POST /job/delete name=job1
+func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err    error
+		name   string
+		oldJob *common.Job
+		bytes  [] byte
+	)
+
+	// POST: a=1 b=2 c=3
+	if err = req.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	// 删除任务名
+	name = req.PostForm.Get("name")
+
+	// 删除任务
+	if oldJob, err = G_jobMgr.Delete(name); err != nil {
+		goto ERR
+	}
+
+	// 正常返回
+	if bytes, err = common.BuildResponse(0, "success", oldJob); err == nil {
+		resp.Write(bytes)
+	}
+
+	return
+
+ERR:
+	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
+// 列举索引 crontab 任务
+func handleJobList(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err     error
+		jobList []*common.Job
+		bytes   [] byte
+	)
+	// 获取任务列表
+	if jobList, err = G_jobMgr.ListJobs(); err != nil {
+		goto ERR
+	}
+
+	// 正常返回
+	if bytes, err = common.BuildResponse(0, "success", jobList); err == nil {
+		resp.Write(bytes)
+	}
+
+	return
+
+ERR:
+	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
+// 强制杀死任务
+// POST /job/kill name=job1
+func handleJobKill(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err   error
+		name  string
+		bytes [] byte
+	)
+
+	if err = req.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	// 待被杀死的任务名称
+	name = req.PostForm.Get("name")
+
+	// 杀死任务
+	if err = G_jobMgr.KillJob(name); err != nil {
+		goto ERR
+	}
+
+	// 正常应答
+	if bytes, err = common.BuildResponse(0, "success", nil); err == nil {
+		resp.Write(bytes)
+	}
+	return
+
+ERR:
+	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
 // 初始化服务
 func InitApiServer() (err error) {
 
@@ -77,6 +173,9 @@ func InitApiServer() (err error) {
 	// 配置路由
 	mux = http.NewServeMux()
 	mux.HandleFunc("/job/save", handleJobSave)
+	mux.HandleFunc("/job/delete", handleJobDelete)
+	mux.HandleFunc("/job/list", handleJobList)
+	mux.HandleFunc("/job/kill", handleJobKill)
 
 	// 启动 TCP 监听
 	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.ApiPort)); err != nil {
