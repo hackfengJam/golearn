@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"fmt"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/mvcc/mvccpb"
 	"golearn/project/owehackfun/crontab/common"
@@ -46,8 +45,9 @@ func (jobMgr *JobMgr) watchJobs() (err error) {
 		// 反序列化 json 得到 Job
 		if job, err = common.UnpackJob(kvpair.Value); err == nil {
 			jobEvent = common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
-			// TODO：把这个 job 同步给 scheduler（调度协程）
-			fmt.Println(*jobEvent)
+			// 同步给 scheduler（调度协程）
+			G_scheduler.PushJobEvent(jobEvent)
+
 		}
 	}
 
@@ -80,9 +80,9 @@ func (jobMgr *JobMgr) watchJobs() (err error) {
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
 
 				}
-				// TODO：推送删除事件给 scheduler
-				// G_Scheduler.PushJobEvent(jobEvent)
-				fmt.Println(*jobEvent)
+				// 变化事件推送给 scheduler
+				G_scheduler.PushJobEvent(jobEvent)
+				//fmt.Println(*jobEvent)
 
 			}
 
