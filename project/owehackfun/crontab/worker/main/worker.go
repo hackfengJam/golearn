@@ -41,6 +41,11 @@ func main() {
 		goto ERR
 	}
 
+	// 服务注册
+	if err = worker.InitRegister(); err != nil {
+		goto ERR
+	}
+
 	// 启动执行器
 	if err = worker.InitExecutor(); err != nil {
 		goto ERR
