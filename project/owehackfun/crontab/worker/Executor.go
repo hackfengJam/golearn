@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"context"
 	"golearn/project/owehackfun/crontab/common"
+	"math/rand"
 	"os/exec"
 	"time"
 )
@@ -40,6 +40,9 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 		result.StartTime = time.Now()
 
 		// 上锁
+		// 随机睡眠（0~1s），随机打散 worker集群 执行随机性
+		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+
 		err = jobLock.TryLock()
 		// 释放锁，注：由于 jobLock.isLocked 的存在，不用担心是否上锁成功
 		defer jobLock.Unlock()
@@ -52,7 +55,7 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			result.StartTime = time.Now()
 
 			// 执行 shell 命令
-			cmd = exec.CommandContext(context.TODO(), "E:\\ProgramFiles\\Git\\bin\\bash.exe", "-c", info.Job.Command)
+			cmd = exec.CommandContext(info.CancelCtx, "E:\\ProgramFiles\\Git\\bin\\bash.exe", "-c", info.Job.Command)
 
 			// 执行并捕获输出
 			output, err = cmd.CombinedOutput()
