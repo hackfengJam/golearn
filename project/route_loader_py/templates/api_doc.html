@@ -1,0 +1,814 @@
+{% set USE_CSS_JS_FONT_RESOURCE_FROM_CDN = True %}
+{% set MAX_DIRECTIVE_VALUE_LENGTH = 20 %}
+
+{% set
+  method_class_map = {
+    'get'   : 'success',
+    'post'  : 'warning',
+    'put'   : 'info',
+    'delete': 'danger',
+  }
+%}
+{% set
+  none_description_directives = [
+    '$desc',
+    '$name',
+    '$type',
+    '$example',
+    '$isOptional',
+    '$optional',
+    '$isRequired',
+    '$required',
+    '$searchType',
+    '$skipSQL',
+  ]
+%}
+
+{% macro render_css_js_font_resource() %}
+  {% if USE_CSS_JS_FONT_RESOURCE_FROM_CDN %}
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/styles/default.min.css">
+
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"></script>
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/highlight.min.js"></script>
+  {% else %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/highlight-style-default.min.css') }}">
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/highlight.min.js') }}"></script>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_param_table(api_id, route_config, category) %}
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th class="api-doc-body-sample-col">Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set body_sample = json.dumps(gen_param_sample(route_config[category]), indent=2) %}
+
+        {% for param_path, param_option in flatten_param_config(route_config[category]).items() %}
+          {% set is_required_param = (category == 'params'
+                      or param_option.get('$isOptional') == False
+                      or param_option.get('$optional') == False
+                      or param_option.get('$isRequired') == True
+                      or param_option.get('$required') == True)
+          %}
+          {% set is_optional_param = (param_option.get('$isOptional') == True
+                      or param_option.get('$optional') == True
+                      or param_option.get('$isRequired') == False
+                      or param_option.get('$required') == False)
+          %}
+          <tr>
+            <td class="mono">
+              {{ param_path.replace('.0', '[#]')}}
+              {% if is_required_param %}
+                <label class="label label-primary pull-right">Required</label>
+              {% elif is_optional_param %}
+                <label class="label label-default pull-right">Optional</label>
+              {% elif param_option['$type'].lower() != 'json' %}
+                <label class="label label-default pull-right">Optional</label>
+              {% endif %}
+            </td>
+            <td class="text-uppercase mono">{{ param_option['$type'] }}</td>
+            <td>
+              <span>
+                {% for line in param_option.get('$desc', '').split('\n') %}
+                  {{ line }}<br />
+                {% endfor %}
+              </span>
+
+              {% for directive, directive_value in param_option.items() %}
+                {% if directive not in none_description_directives %}
+                  {% set directive_value_dump = json.dumps(directive_value, indent=2) %}
+                  <div>
+                    <span class="fa fa-fw fa-minus"></span>
+                    <strong class="text-capitalize">{{ directive.replace('$', '') }} :</strong>
+                    {% if isinstance(directive_value, (tuple, list)) %}
+                      <pre class="plain-text">{{ '\n'.join(directive_value_dump.split('\n')[1:-1]) }}</pre>
+                    {% else %}
+                      {% if directive_value_dump|length > MAX_DIRECTIVE_VALUE_LENGTH %}
+                        <span class="mono" data-toggle="tooltip" data-placement="top" title="{{ directive_value_dump }}">
+                          {{ directive_value_dump[0:MAX_DIRECTIVE_VALUE_LENGTH] + '...' }}
+                        </span>
+                      {% else %}
+                        <span class="mono">{{ directive_value_dump }}</span>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </td>
+            {% if category == 'body' %}
+              {% if loop.first %}
+                <td rowspan="100%">
+                  <div class="form-group">
+                    <textarea class="form-control api-doc-no-break mono"
+                      rows="{{ loop.length * 3 }}"
+                      placeholder="Body value"
+                      target-api="{{ api_id }}"
+                      handler="options"
+                      category="{{ category }}"
+                      name="body"
+                      default-value="{{ body_sample }}"
+                    >{{ body_sample }}</textarea>
+                  </div>
+                  <div class="form-group text-right">
+                    <button
+                    class="btn btn-default btn-sm"
+                    target-api="{{ api_id }}"
+                    handler="reset"
+                    category="{{ category }}"
+                    name="body"
+                    ><i class="fa fa-repeat fa-flip-horizontal"></i> Reset</button>
+                    <button
+                    class="btn btn-primary btn-sm"
+                    target-api="{{ api_id }}"
+                    target-api-method="{{ route_config.method }}"
+                    handler="run"
+                    >Run Request <i class="fa fa-play"></i></button>
+                  </div>
+                </td>
+              {% endif %}
+            {% else %}
+              <td>
+                <div class="form-inline">
+                  {% if param_option['$type'] == 'enum' %}
+                    <select class="form-control input-sm api-doc-select-control"
+                      target-api="{{ api_id }}"
+                      handler="options"
+                      category="{{ category }}"
+                      name="{{ param_path }}"
+                    >
+                      <option value="">(None)</option>
+                      {% for opt in param_option['$in'] %}
+                        <option value="{{ opt }}">{{ opt }}</option>
+                      {% endfor %}
+                    </select>
+                  {% elif param_option['$type'] in ('bool', 'boolean') %}
+                    <select class="form-control input-sm api-doc-select-control"
+                      target-api="{{ api_id }}"
+                      handler="options"
+                      category="{{ category }}"
+                      name="{{ param_path }}"
+                    >
+                      <option value="">(None)</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  {% else %}
+                    <input
+                      class="form-control input-sm"
+                      target-api="{{ api_id }}"
+                      handler="options"
+                      category="{{ category }}"
+                      name="{{ param_path }}"
+                      placeholder="{{ param_path.split('.')[-1] + ' Value' }}"
+                    >
+                  {% endif %}
+
+                  <button
+                    class="btn btn-default btn-sm"
+                    target-api="{{ api_id }}"
+                    handler="reset"
+                    category="{{ category }}"
+                    name="{{ param_path }}"
+                  ><i class="fa fa-repeat fa-flip-horizontal"></i> Reset</button>
+                </div>
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
+
+<div class="modal fade" id="apiResultModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document" style="width: 80%">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">API Result</h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-xs-12 col-sm-6">
+            <h3>Request</h3>
+            <pre id="apiResultRequestInfo"></pre>
+            <br />
+            <pre id="apiResultRequestBody"></pre>
+          </div>
+          <div class="col-xs-12 col-sm-6">
+            <h3>Response</h3>
+            <pre id="apiResultResponseInfo"></pre>
+            <br />
+            <pre id="apiResultResponseBody"></pre>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!DOCTYPE html>
+<html>
+<head>
+  {{ render_css_js_font_resource() }}
+
+  <title>API Documents</title>
+
+  <style type="text/css">
+    * {font-family: "PingFang", "Helvetica Neue", "Helvetica", "STHeitiSC-Light", "Arial", "Hiragino Sans GB", "Hiragino Sans GB W3", "WenQuanYi Micro Hei", sans-serif; -webkit-font-smoothing: antialiased; }
+    input, textarea, pre, pre *, .mono {font-family: monospace !important; }
+    pre.plain-text {background: none; border: none; padding: 0; }
+    .table td {font-size: 12px; }
+    .nowrap {white-space: nowrap; }
+    .api-doc {}
+    .api-doc p {font-size: 15px; line-height: 32px; }
+    .api-doc pre {font-size: 14px; }
+    .api-doc blockquote {}
+    .api-doc blockquote > p {color: grey; }
+    .api-doc table {margin-right: 60px; width: 100%; border-collapse: collapse; }
+    .api-doc table tr {border-top: 1px solid #cccccc; background-color: white; margin: 0; padding: 0; }
+    .api-doc table tr:nth-child(2n) {background-color: #f8f8f8; }
+    .api-doc table tr th {font-weight: bold; border: 1px solid #cccccc; margin: 0; padding: 6px 13px; }
+    .api-doc table tr td {border: 1px solid #cccccc; margin: 0; padding: 6px 13px; font-family: monospace !important; }
+    .api-doc table tr th :first-child, table tr td :first-child {margin-top: 0; }
+    .api-doc table tr th :last-child, table tr td :last-child {margin-bottom: 0; }
+    .api-doc em {color: red; }
+    .api-doc h1, .api-doc h2, .api-doc h3, .api-doc h4, .api-doc h5, .api-doc h6 {margin-left: -50px; }
+    .api-doc h1 {font-size: 32px; font-weight: bolder; margin-top: 50px; }
+    .api-doc h2 {font-size: 24px; font-weight: bolder; margin-top: 30px; border-bottom: 1px solid lightgrey; }
+    .api-doc h3 {font-size: 18px; margin-top: 20px; font-style: italic; }
+    .api-doc h4 {font-size: 16px; margin-top: 20px; font-weight: bolder; color: grey; }
+    .api-doc h5 {font-size: 14px; margin-top: 20px; color: grey; }
+    .api-doc h6 {font-size: 12px; margin-top: 20px; }
+    .api-doc-title {font-size: 20px; }
+    .api-doc-desc {padding-left: 20px; }
+    .api-doc-desc h1, .api-doc-desc h2, .api-doc-desc h3, .api-doc-desc h4, .api-doc-desc h5, .api-doc-desc h6 {margin-left: unset !important; }
+    .api-doc-no-break {white-space: nowrap; overflow: scroll; }
+    .api-doc-select-control {width: 166px !important; }
+    .api-doc-body-sample-col {min-width: 300px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fa fa-book"></i> API Documents</h1>
+
+    {% for route in routes %}
+      {% set c = route.config %}
+
+      {% set api_id = 'api_{}'.format(loop.index) %}
+      {% set api_doc_id = get_md5('api_doc_{}_{}'.format(c.method, c.url)) %}
+      {% set route_doc_detail_id = 'routeDocDetail_{}'.format(loop.index) %}
+
+      {% set api_url = c.get('prefix', '') + c.get('url', '') %}
+      <div id="{{ api_doc_id }}" class="panel panel-default">
+        <!-- Title -->
+        <div class="panel-heading" data-toggle="collapse" data-target="#{{ route_doc_detail_id }}">
+          <!-- API Name -->
+          <span class="api-doc-title" data-toggle="collapse" data-target="#{{ route_doc_detail_id }}">
+            {{ c.name }}
+            <div class="pull-right">
+              <!-- Deprecated label -->
+              {% if c.deprecated %}
+                <label class="label label-danger">Deprecated</label>
+              {% endif %}
+            </div>
+          </span>
+          <br>
+          <!-- API Title -->
+          <label class="label label-{{ method_class_map[c.method] }} text-uppercase">{{ c.method }}</label>
+          <span class="mono">{{ api_url }}</span>
+        </div>
+        <div class="panel-collapse collapse" id="{{ route_doc_detail_id }}">
+          <div class="panel-body">
+            <!-- API Method URL -->
+            <h3>
+            　<label class="label label-{{ method_class_map[c.method] }} text-uppercase">{{ c.method }}</label>
+
+              {% if c.method in ('get', 'delete') %}
+                <span class="mono">{{ api_url }}</span>
+              {% elif c.method in ('post', 'put') %}
+                <span
+                  id="{{ api_id}}"
+                  base-url="{{ api_url }}"
+                  href="{{ api_url }}"
+                  class="mono"
+                >{{ api_url }}</span>
+              {% endif %}
+
+              <div class="pull-right">
+                <a target="_blank"
+                  id="{{ api_id }}"
+                  base-url="{{ api_url }}"
+                  href="{{ api_url }}"
+                  target-api="{{ api_id }}"
+                  target-api-method="{{ c.method }}"
+                  handler="run"
+                  class="btn btn-primary"
+                >Run Request <i class="fa fa-play"></i></a>
+                <a class="btn btn-default" href="{{ doc_rule + '?apiDocId=' + api_doc_id }}" target="_blank">
+                  New window <i class="fa fa-external-link"></i>
+                </a>
+              </div>
+            </h3>
+
+            <hr />
+
+            <!-- API Features -->
+            <h3>Features</h3>
+            <h4>
+              {% if c.deprecated %}
+                <label class="label label-danger">Deprecated</label>
+              {% endif %}
+
+              {% if c.response %}
+                <label class="label label-info">Response <span class="text-uppercase">{{ c.response }}</span></label>
+              {% endif %}
+
+              {% if c.requireSignIn %}
+                <label class="label label-primary"><i class="fa fa-key"></i> Require Sign In</label>
+              {% endif %}
+
+              {% if c.paging %}
+                <label class="label label-warning"><i class="fa fa-book"></i> Support Paging</label>
+              {% endif %}
+            </h4>
+
+            <!-- API Descriptions -->
+            {% if c.desc %}
+              <h3>Description</h3>
+                {% if c.descType == 'markdown' %}
+                  <div class="api-doc-desc api-doc">{{ render_md(c.desc) | safe }}</div>
+                {% else %}
+                  <pre class="api-doc-desc plain-text">{{ c.desc }}</pre>
+                {% endif %}
+            {% endif %}
+
+            <!-- API Params -->
+            {% if c.headers %}
+              <h3>Headers</h3>
+              {{ render_param_table(api_id, c, 'headers') }}
+            {% endif %}
+
+            <!-- API Params -->
+            {% if c.params %}
+              <h3>URL Params</h3>
+              {{ render_param_table(api_id, c, 'params') }}
+            {% endif %}
+
+            <!-- API Query -->
+            {% if c.query %}
+              <h3>Query</h3>
+              {{ render_param_table(api_id, c, 'query') }}
+            {% endif %}
+
+            <!-- API Body -->
+            {% if c.body %}
+              <h3>Body</h3>
+              {{ render_param_table(api_id, c, 'body') }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <div style="height: 150px"></div>
+</body>
+
+<div style="position: fixed; right: 50px; bottom: 50px; z-index: 99999">
+  <div class="btn-group-vertical">
+    <button id="backToTop" class="btn btn-default" style="text-align: left;">
+      <i class="fa fa-fw fa-arrow-up"></i>
+      Back to TOP
+    </button>
+    <button id="expandAll" class="btn btn-default" style="text-align: left;">
+      <i class="fa fa-fw fa-plus"></i>
+      Expand All
+    </button>
+    <button id="collapseAll" class="btn btn-default" style="text-align: left;">
+      <i class="fa fa-fw fa-minus"></i>
+      Collapse All
+    </button>
+  </div>
+</div>
+
+<script type="text/javascript">
+  /**
+   * Use full tools
+   */
+  var toolkit = {};
+
+  /**
+   * Format and return a string.
+   *
+   * @param  {String} formatter - String formatter
+   * @param  {...*} [values]    - Values
+   * @return {String}           - Formatted string
+   *
+   * @example
+   * var name = 'World';
+   * console.log(strf('Hello, {0}!', name));
+   */
+  toolkit.strf = function strf() {
+    var args = Array.prototype.slice.call(arguments);
+    if (0 === args.length) {
+      return '';
+    }
+
+    var pattern = args.shift();
+    try {
+      pattern = pattern.toString();
+    } catch (ex) {
+      pattern = '';
+    }
+
+    return pattern.replace(/\{(\d+)\}/g, function replaceFunc(m, i) {
+      return args[i] + '';
+    });
+  };
+
+  /**
+   * Check if the value is `null` or `undefined`.
+   *
+   * @param  {*} o - Target value
+   * @return {Boolean}
+   */
+  var isNullOrUndefined = toolkit.isNullOrUndefined = function isNullOrUndefined(o) {
+    if (o === null || o === undefined) {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Check if the value is `null` or `''`.
+   *
+   * @param  {*} o - Target value
+   * @return {Boolean}
+   */
+  var isNullOrEmpty = toolkit.isNullOrEmpty = function isNullOrEmpty(o) {
+    if (isNullOrUndefined(o) === true) {
+      return true;
+    }
+
+    if ('string' === typeof o && o.length === 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Check if the value is `null` or `''` or `' '`.
+   *
+   * @param  {*} o - Target value
+   * @return {Boolean}
+   */
+  var isNullOrWhiteSpace = toolkit.isNullOrWhiteSpace = function isNullOrWhiteSpace(o) {
+    if (isNullOrEmpty(o) === true) {
+      return true;
+    }
+
+    if ('string' === typeof o && o.trim().length === 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Check if the value is `null`, `''`, `'  '`,
+   * empty Array or empty Object.
+   *
+   * @param  {*} o - Target value
+   * @return {Boolean}
+   */
+  var isNothing = toolkit.isNothing = function isNothing(o) {
+    if (isNullOrWhiteSpace(o) === true) {
+      return true;
+    }
+
+    if (Array.isArray(o) && o.length === 0) {
+      return true;
+    }  else if (JSON.stringify(o) === '{}') {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Create a URL by params and query.
+   *
+   * @param  {String} url    - URL
+   * @param  {Object} params - Param for URL
+   * @param  {Object} query  - Query for URL
+   * @return {String}        - URL with params and query
+   */
+  var createFullURL = toolkit.createFullURL = function createFullURL(url, params, query) {
+    // Prepare URL
+    if (!isNothing(params)) {
+      url = url.split('?')[0];
+      for (var k in params) if (params.hasOwnProperty(k)) {
+        var v = params[k];
+
+        if (isNothing(v)) continue;
+
+        url = url.replace(toolkit.strf('<{0}>', k), v);
+      }
+    }
+
+    // Prepare Query
+    var qs = '';
+    if (!isNothing(query)) {
+      var parts = [];
+      for (var k in query) if (query.hasOwnProperty(k)) {
+        var v = query[k];
+
+        if (isNothing(v)) continue;
+
+        parts.push(k + '=' + v);
+      }
+      qs = '?' + parts.join('&');
+    }
+
+    return url + qs;
+  };
+
+  /**
+   * Get query object form URL
+   *
+   * @param  {String} url
+   * @return {Object} - Query object
+   */
+  var getQuery = toolkit.getQuery = function getQuery(url) {
+    var query = {};
+
+    url = url || '';
+    var queryString = url.split('#')[0].split('?')[1];
+    if (!queryString) {
+      return query;
+    }
+
+    var parts = queryString.split('&');
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split('=');
+      var k = kv[0];
+      var v = kv[1];
+
+      if (!query[k]) {
+        query[k] = v;
+      } else {
+        if (Array.isArray(query[k])) {
+          query[k].push(v);
+        } else {
+          query[k] = [query[k], v];
+        }
+      }
+    }
+
+    return query;
+  };
+
+  /**
+   * Replace query to URL
+   *
+   * @param  {URL}    url
+   * @param  {Object} query
+   * @return {String}
+   */
+  var replaceQuery = toolkit.replaceQuery = function updateQuery(url, query) {
+    var urlParts = null;
+
+    urlParts = url.split('#');
+    var hash = urlParts[1];
+
+    urlParts = urlParts[0].split('?');
+    var rawURL = urlParts[0];
+
+    var queryParts = [];
+    for (var k in query) if (query.hasOwnProperty(k)) {
+      var v = query[k];
+      queryParts.push(k + '=' + v);
+    }
+
+    var nextURL = rawURL;
+
+    if (queryParts.length > 0) {
+      nextURL += '?' + queryParts.join('&');
+    }
+
+    if (hash) {
+      nextURL += '#' + hash;
+    }
+
+    return nextURL;
+  };
+
+  /**
+   * Update query to URL
+   *
+   * @param  {URL}    url
+   * @param  {Object} query
+   * @param  {Boolean=false} skipBlank
+   *
+   * @return {String}
+   */
+  var updateQuery = toolkit.updateQuery = function updateQuery(url, query, skipBlank) {
+    var nextQuery = getQuery(url);
+
+    for (var k in query) if (query.hasOwnProperty(k)) {
+      var v = query[k];
+
+      nextQuery[k] = v;
+    }
+
+    url = replaceQuery(url, nextQuery, skipBlank);
+
+    return url;
+  };
+</script>
+
+<script type="text/javascript">
+  $(function() {
+    /**
+     * Fire when params/query changed.
+     */
+    var changeTryParams = function() {
+      var apiId = $(this).attr('target-api');
+
+      var params = {};
+      $(toolkit.strf('[target-api={0}][handler=options][category=params]', apiId)).each(function() {
+        var v = $(this).val().trim() || null;
+
+        if (!toolkit.isNothing(v)) {
+          params[$(this).attr('name')] = $(this).val().trim() || null;
+        }
+      });
+
+      var query = {};
+      $(toolkit.strf('[target-api={0}][handler=options][category=query]', apiId)).each(function() {
+        var v = $(this).val().trim() || null;
+
+        if (!toolkit.isNothing(v)) {
+          query[$(this).attr('name')] = v;
+        }
+      });
+
+      var $api = $('#' + apiId);
+
+      var baseURL = $api.attr('base-url');
+      var showURL = toolkit.createFullURL(baseURL, params, query);
+
+      var targetURL = toolkit.updateQuery(showURL);
+
+      $api.attr('href', targetURL).text(showURL);
+    };
+
+    /**
+     * Fire when `Reset` button is clicked.
+     */
+    var resetTryParams = function() {
+      var $this    = $(this);
+      var apiId    = $this.attr('target-api');
+      var category = $this.attr('category');
+      var name     = $this.attr('name');
+
+      var $target = $(toolkit.strf(
+        '[target-api={0}][handler=options][category={1}][name={2}]',
+        apiId, category, name));
+
+      $target.val($target.attr('default-value')).change();
+    };
+
+    /**
+     * Call API with params/query/body.
+     */
+    var callAPI = function() {
+      $this = $(this);
+      var apiId = $this.attr('target-api');
+
+      var targetURL = $('#' + apiId).attr('href');
+      var targetAPIMethod = $this.attr('target-api-method');
+
+      var postData = $(toolkit.strf('[target-api={0}][handler=options][category=body]', apiId)).val() || undefined;
+
+      var headers = {};
+      $(toolkit.strf('[target-api={0}][handler=options][category=headers]', apiId)).each(function() {
+        var v = $(this).val().trim() || null;
+
+        if (!toolkit.isNothing(v)) {
+          headers[$(this).attr('name')] = $(this).val().trim() || null;
+        }
+      });
+
+      var showAPIResult = function(data, status) {
+        $apiResultRequestInfo  = $('#apiResultRequestInfo');
+        $apiResultRequestBody  = $('#apiResultRequestBody');
+        $apiResultResponseInfo = $('#apiResultResponseInfo');
+        $apiResultResponseBody = $('#apiResultResponseBody');
+
+        var requestInfoDump = targetAPIMethod.toUpperCase() + ' ' + targetURL + '\n';
+        for (var k in headers) if (headers.hasOwnProperty(k)) {
+          requestInfoDump += k + ': ' + headers[k] + '\n';
+        }
+        var requestBodyDump = postData ? JSON.stringify(JSON.parse(postData), null, '  ').toString() : '';
+
+        $apiResultRequestInfo.text(requestInfoDump || '<NONE>');
+        $apiResultRequestBody.text(requestBodyDump || '<NONE>');
+
+        var responseInfoDump = 'STATUS CODE: ' + status + '\n';
+        var responseBodyDump = data;
+        $apiResultResponseInfo.text(responseInfoDump || '<NONE>');
+        $apiResultResponseBody.text(responseBodyDump || '<NONE>');
+
+        hljs.highlightBlock($apiResultRequestBody[0]);
+        hljs.highlightBlock($apiResultResponseBody[0]);
+
+        $('#apiResultModal').modal();
+      };
+
+
+      $.ajax({
+        method : targetAPIMethod.toLowerCase(),
+        url    : targetURL,
+        headers: headers,
+        data   : postData,
+        complete: function(jqXHR) {
+          var data = jqXHR.responseJSON;
+          if (data) {
+            data = JSON.stringify(data, null, '  ');
+          } else {
+            data = jqXHR.responseText;
+            try {
+              data = JSON.parse(data, null, '  ');
+              data = JSON.stringify(data, null, '  ');
+            } catch(ex) {
+              // Nope
+            }
+          }
+
+          showAPIResult(data, jqXHR.status);
+        },
+      });
+
+      return false;
+    };
+
+    /**
+     * Back to API document page TOP.
+     */
+    var backToTop = function() {
+      $(document).scrollTop(0);
+    };
+
+    /**
+     * Collapse All API documents.
+     */
+    var collapseAll = function() {
+      $('.collapse').collapse('hide');
+    };
+
+    /**
+     * Expand All API documents.
+     */
+    var expandAll = function() {
+      $('.collapse').collapse('show');
+    };
+
+    /* Event Binding */
+    $(document).on('change', '[handler=options]', changeTryParams);
+    $(document).on('click', '[handler=reset]', resetTryParams);
+
+    $(document).on('click', '[handler=run]', callAPI);
+
+    $(document).on('click', '#backToTop', backToTop);
+    $(document).on('click', '#collapseAll', collapseAll);
+    $(document).on('click', '#expandAll', expandAll);
+
+    var $apiDocToGo = $('#' + toolkit.getQuery(location.href).apiDocId);
+    if ($apiDocToGo.length > 0) {
+      $apiDocToGo.find('.panel-heading').click();
+      $(document).scrollTop($apiDocToGo.offset().top - 80);
+    }
+  });
+</script>
+</html>

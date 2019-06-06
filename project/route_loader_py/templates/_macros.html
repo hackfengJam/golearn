@@ -1,0 +1,63 @@
+{% macro do_post(url) %}
+  <style type="text/css">
+    textarea, pre {
+      font-family: monospace !important;
+    }
+  </style>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">Post Test</div>
+    <div class="panel-body">
+      <h3>Request to <label class="label label-warning">POST</label> <span id="postURL">{{ url }}</span></h3>
+      <div class="form-group">
+        <textarea id="postBody" rows=10 class="form-control"></textarea>
+      </div>
+      <div class="form-group text-right">
+        <button id="postButton" class="btn btn-primary" style="width: 100px;">Send</button>
+      </div>
+
+      <hr />
+
+      <h3>Response</h3>
+      <div class="form-group">
+        <pre id="postResponse" class="form-control" style="height: 200px;">Waiting...</pre>
+      </div>
+    </div>
+  </div>
+
+  {% block scripts %}
+    <script type="text/javascript">
+      $(function() {
+        var postBodyExample = {
+          data: {
+            id  : 1,
+            name: 'Tom',
+          }
+        };
+        $('#postBody').val(JSON.stringify(postBodyExample, null, '  '));
+
+        $(document).on('click', '#postButton', function() {
+          $('#postResponse').text('Sending ajax request...');
+
+          $.ajax({
+            method: 'POST',
+            url   : $('#postURL').text().trim(),
+            data  : $('#postBody').val().trim(),
+            complete: function(jqXHR) {
+              var data = jqXHR.responseJSON;
+              if ('object' === typeof data) {
+                data = JSON.stringify(data, null, '  ');
+              } else {
+                data = jqXHR.responseText;
+              }
+
+              var ret = jqXHR.status + ' ' + jqXHR.statusText + '\n' + data;
+
+              $('#postResponse').text(ret);
+            },
+          });
+        });
+      });
+    </script>
+  {% endblock %}
+{% endmacro %}

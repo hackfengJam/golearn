@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block head %}
+  {{ super() }}
+  <title>MyModule Index</title>
+{% endblock %}
+
+{% block body %}
+  {{ super() }}
+  <h1>MyModule Index</h1>
+  <p>MyModule Index</p>
+  <a href="{{ url_for('index') }}">Goto App Index</a>
+
+  <hr />
+
+  {{ macros.do_post(url_for('my_module.my_module_do_post', param_field="my_param_field")) }}
+{% endblock %}
