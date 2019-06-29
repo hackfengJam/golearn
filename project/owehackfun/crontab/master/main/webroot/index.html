@@ -240,7 +240,7 @@
             $("#log-list tbody").empty()
 
             // 获取任务名
-            var jobName = !(this).parents("tr").children(".job-name").text()
+            var jobName = $(this).parents("tr").children(".job-name").text()
 
             $.ajax({
                 url: '/job/log',

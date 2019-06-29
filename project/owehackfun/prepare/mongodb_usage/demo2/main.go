@@ -41,7 +41,7 @@ func main() {
 		ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	*/
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	if client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://127.0.0.1:27017")); err != nil {
+	if client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017")); err != nil {
 		fmt.Println(err)
 		return
 	}
