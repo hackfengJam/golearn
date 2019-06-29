@@ -7,8 +7,12 @@ import (
 
 // 程序配置
 type Config struct {
-	EtcdEndpoints   []string `json:"etcdEndpoints"`
-	EtcdDialTmeOut  int      `json:"etcdDialTimeOut"`
+	EtcdEndpoints         []string `json:"etcdEndpoints"`
+	EtcdDialTmeOut        int      `json:"etcdDialTimeOut"`
+	MongodbUri            string   `json:"mongodbUri"`
+	MongodbConnectTimeOut int      `json:"mongodbConnectTimeOut"`
+	JobLogBatchSize       int      `json:"jobLogBatchSize"`
+	JobLogCommitTimeout   int      `json:"jobLogCommitTimeout"`
 }
 
 var (
