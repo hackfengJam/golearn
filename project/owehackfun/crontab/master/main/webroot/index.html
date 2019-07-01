@@ -295,9 +295,9 @@
                         tr.append($('<td>').html(timeFormat(log.scheduleTime)))
                         tr.append($('<td>').html(timeFormat(log.startTime)))
                         tr.append($('<td>').html(timeFormat(log.endTime)))
+                        $("#log-list tbody").append(tr)
                     }
 
-                    $("#log-list tbody")
 
                 }
             })
@@ -327,8 +327,8 @@
                         var workerIP = workerList[i]
                         var tr = $("<tr>")
                         tr.append($('<td>').html(workerIP))
+                        $("#worker-list tbody").append(tr)
                     }
-                    $("#worker-list tbody")
                 }
             })
 

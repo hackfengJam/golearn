@@ -40,6 +40,9 @@ func (scheduler *Scheduler) handleJobEvent(jobEvent *common.JobEvent) {
 		}
 	case common.JOB_EVENT_KILL: // 强杀任务事件
 		// 取消掉 Command 取消掉任务执行
+		fmt.Printf("取消掉 Command 取消掉任务执行: %s", jobEvent.Job.Name)
+
+		// TODO 无效，待排查
 		if jobExecuteInfo, jobExecuting = scheduler.jobExecutingTable[jobEvent.Job.Name]; jobExecuting {
 			jobExecuteInfo.CancelFunc() // 触发 command 杀死 shell 子进程，任务退出得到退出错误执行结果
 		}
@@ -123,7 +126,8 @@ func (scheduler *Scheduler) handleJobResult(result *common.JobExecuteResult) {
 	// 生成执行日志
 	if result.Err != common.ERR_LOCK_ALREADY_REQUIRED {
 		jobLog = &common.JobLog{
-			JobName:      result.ExecuteInfo.Job.Command,
+			JobName:      result.ExecuteInfo.Job.Name,
+			Command:      result.ExecuteInfo.Job.Command,
 			Output:       string(result.Output),
 			PlanTime:     result.ExecuteInfo.PlanTime.UnixNano() / 1000 / 1000,
 			ScheduleTime: result.ExecuteInfo.RealTime.UnixNano() / 1000 / 1000,

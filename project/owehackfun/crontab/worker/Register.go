@@ -66,6 +66,9 @@ func (register *Register) keepOnline() {
 		cancelFunc context.CancelFunc
 	)
 
+	// TODO 待考究：keepAliveResp declared and not used
+	keepAliveResp = keepAliveResp
+
 	for {
 		// 注册路径
 		regKey = common.JOB_WORKER_DIR + register.localIP
