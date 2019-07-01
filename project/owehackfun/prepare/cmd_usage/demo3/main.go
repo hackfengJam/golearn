@@ -17,12 +17,15 @@ func main() {
 
 	// 1秒的时候，杀死cmd
 	var (
+		bashPath string
+
 		ctx        context.Context
 		cancelFunc context.CancelFunc
 		cmd        *exec.Cmd
 		resultChan chan *result
 		res        *result
 	)
+	bashPath = "/bin/bash"
 
 	// 创建一个结果队列
 	resultChan = make(chan *result, 1000)
@@ -38,7 +41,7 @@ func main() {
 			err    error
 		)
 
-		cmd = exec.CommandContext(ctx, "E:\\ProgramFiles\\Git\\bin\\bash.exe", "-c", "sleep 5;ls -l")
+		cmd = exec.CommandContext(ctx, bashPath, "-c", "sleep 5;ls -l")
 		// select { case <- ctx.Done(): }
 		// kill pid 进程ID，杀死子进程
 

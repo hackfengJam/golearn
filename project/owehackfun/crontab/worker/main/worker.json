@@ -19,5 +19,9 @@
   "jobLogBatchSize": 100,
 
   "日志自动提交超时":"在批次未到达阈值之前，超时会自动提交batch",
-  "jobLogCommitTimeout": 1000
+  "jobLogCommitTimeout": 1000,
+
+
+  "Bash 路径": "执行命令的 bash 命令路径",
+  "bashPath": "/bin/bash"
 }

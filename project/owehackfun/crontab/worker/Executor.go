@@ -55,7 +55,7 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			result.StartTime = time.Now()
 
 			// 执行 shell 命令
-			cmd = exec.CommandContext(info.CancelCtx, "E:\\ProgramFiles\\Git\\bin\\bash.exe", "-c", info.Job.Command)
+			cmd = exec.CommandContext(info.CancelCtx, G_config.BashPath, "-c", info.Job.Command)
 
 			// 执行并捕获输出
 			output, err = cmd.CombinedOutput()

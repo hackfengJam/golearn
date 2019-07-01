@@ -7,11 +7,13 @@ import (
 
 func main() {
 	var (
-		cmd *exec.Cmd
-		err error
+		cmd      *exec.Cmd
+		err      error
+		bashPath string
 	)
+	bashPath = "/bin/bash"
 
-	cmd = exec.Command("E:\\ProgramFiles\\Git\\bin\\bash.exe", "-c", "echo 1")
+	cmd = exec.Command(bashPath, "-c", "echo 1")
 
 	err = cmd.Run()
 
