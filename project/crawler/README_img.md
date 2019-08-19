@@ -20,7 +20,7 @@
 
 #### 单任务版爬虫架构
 
-[!Alt Text](./doc_images/simple.png)
+![单任务版爬虫架构](./doc_images/simple.png)
 
 #### 并发版爬虫架构
 ```
@@ -51,13 +51,13 @@
 
 #### 实现I:
 
-[!Alt Text](./doc_images/concurrent_simple.png)
+![并发版爬虫架构 实现I](./doc_images/concurrent_simple.png)
 
 
 #### 实现II：并发分发Request
 
-[!Alt Text](./doc_images/concurrent_simple_goroutine.png)
+![并发分发 Request](./doc_images/concurrent_simple_goroutine.png)
 
 #### 实现III：Request队列和Worker队列
 
-[!Alt Text](./doc_images/concurrent.png)
+![Request 队列 和 Worker 队列](./doc_images/concurrent.png)
