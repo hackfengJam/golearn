@@ -54,14 +54,38 @@ func pase_student_cor2() {
 	fmt.Println(m["zhou"].Age, m["li"].Age, m["wang"].Age, )
 }
 
+
+func arr_student() {
+	stus := []student{
+		{Name: "zhou", Age: 24},
+		{Name: "li", Age: 23},
+		{Name: "wang", Age: 22},
+	}
+	for _, stu := range stus {
+		fmt.Printf("%p \n", &stu)
+		stu.Name = "xixi"
+	}
+
+	//for i := 0; i < len(stus); i++ {
+	//	stus[i].Name = "xixi"
+	//}
+	for i := range stus{
+		stus[i].Name = "xixi"
+	}
+
+	fmt.Println(stus[0], stus[1], stus[2])
+
+}
+
 func main() {
-	// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
-	// 22 22 22
-	pase_student()
-	// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
-	// 24 23 22
-	pase_student_cor()
-	// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
-	// 24 23 22
-	pase_student_cor2()
+	//// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
+	//// 22 22 22
+	//pase_student()
+	//// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
+	//// 24 23 22
+	//pase_student_cor()
+	//// map[zhou:0xc42000a060 li:0xc42000a060 wang:0xc42000a060]
+	//// 24 23 22
+	//pase_student_cor2()
+	arr_student()
 }
