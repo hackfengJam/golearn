@@ -4,19 +4,20 @@ import (
 	"log"
 )
 
-type ConcurrentEngine struct {
-	Scheduler   Scheduler
+type ConcurrentRequestEngine struct {
+	Scheduler   ConcurrentRequestScheduler
 	WorkerCount int
 }
 
-type Scheduler interface {
+
+type ConcurrentRequestScheduler interface {
 	Submit(Request)
 	ConfigureMasterWorkerChan(chan Request)
-	WorkerReady(chan Request)
-	Run()
+	//WorkerReady(chan Request)
+	//Run()
 }
 
-func (e ConcurrentEngine) OutPut(items []interface{}) {
+func (e ConcurrentRequestEngine) OutPut(items []interface{}) {
 	// TODO to mq
 	itemCount := 0
 
@@ -25,21 +26,19 @@ func (e ConcurrentEngine) OutPut(items []interface{}) {
 		itemCount++
 	}
 
+
 }
 
-func (e *ConcurrentEngine) Run(seeds ...Request) {
-    // worker -> 引擎 的 chan
+func (e *ConcurrentRequestEngine) Run(seeds ...Request) {
+
+	in := make(chan Request)
 	out := make(chan ParseResult)
+	e.Scheduler.ConfigureMasterWorkerChan(in)
 
-	// 启动 Scheduler
-	e.Scheduler.Run()
-
-	// 启动 WorkerCount 个 worker
 	for i := 0; i < e.WorkerCount; i++ {
-		createWorker(out, e.Scheduler)
+		e.createWorker(in, out)
 	}
 
-	// 将所有种子 Submit
 	for _, r := range seeds {
 		e.Scheduler.Submit(r)
 	}
@@ -57,13 +56,11 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 	}
 }
 
-
-func createWorker(out chan ParseResult, s Scheduler) {
-	in := make(chan Request)
+func (e *ConcurrentRequestEngine) createWorker(
+	in chan Request, out chan ParseResult) {
 	go func() {
 		for {
 			// tell scheduler i'm ready
-			s.WorkerReady(in)
 			request := <-in
 			result, err := worker(request)
 			if err != nil {
