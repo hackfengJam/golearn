@@ -17,8 +17,9 @@ func (s QueuedScheduler) WorkerReady(w chan engine.Request) {
 	s.workerChan <- w
 }
 
-func (s *QueuedScheduler) ConfigureMasterWorkerChan(chan engine.Request) {
-	panic("implement me")
+func (s *QueuedScheduler) WorkerChan() chan engine.Request {
+	// 每个 worker 都有自己的 chan
+	return make(chan engine.Request)
 }
 
 func (s *QueuedScheduler) Run() {
@@ -43,6 +44,7 @@ func (s *QueuedScheduler) Run() {
 				// send r next_request to w
 				workerQ = append(workerQ, w)
 			case activeWorker <- activeRequest:
+				// 当真正调度成功，则出队
 				workerQ = workerQ[1:]
 				requestQ = requestQ[1:]
 			}

@@ -17,7 +17,7 @@ type ConcurrentRequestScheduler interface {
 	//Run()
 }
 
-func (e ConcurrentRequestEngine) OutPut(items []interface{}) {
+func (e *ConcurrentRequestEngine) OutPut(items []interface{}) {
 	// TODO to mq
 	itemCount := 0
 
@@ -30,8 +30,9 @@ func (e ConcurrentRequestEngine) OutPut(items []interface{}) {
 }
 
 func (e *ConcurrentRequestEngine) Run(seeds ...Request) {
-
+	// 所有 worker 公用一个输入
 	in := make(chan Request)
+	// 所有 worker 公用一个输出
 	out := make(chan ParseResult)
 	e.Scheduler.ConfigureMasterWorkerChan(in)
 

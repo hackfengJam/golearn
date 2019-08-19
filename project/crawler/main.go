@@ -37,15 +37,13 @@ import (
 //}
 
 func main() {
-	//e := engine.ConcurrentEngine{
-	//	//Scheduler:   &scheduler.SimpleScheduler{},
-	//	Scheduler:   &scheduler.QueuedScheduler{},
-	//	WorkerCount: 10,
-	//}
-	e := engine.ConcurrentRequestEngine{
-		Scheduler: &scheduler.SimpleScheduler{},
+	e := engine.ConcurrentEngine{
+		//Scheduler:   &scheduler.SimpleScheduler{},
+		Scheduler:   &scheduler.QueuedScheduler{},
 		WorkerCount: 10,
 	}
+	//e := engine.SimpleEngine{
+	//}
 	e.Run(engine.Request{
 		Url:        "http://www.zhenai.com/zhenghun",
 		ParserFunc: parser.ParseCityList,
