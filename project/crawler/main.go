@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"golearn/project/crawler/engine"
 	"golearn/project/crawler/scheduler"
 	"golearn/project/crawler/zhenai/parser"
+	"os"
+	"time"
 )
 
 //func main() {
@@ -36,12 +39,53 @@ import (
 //	fmt.Printf("Matches found: %d\n", len(matches))
 //}
 
+func QueuedSchedulerSpider()  {
+
+	e := engine.ConcurrentEngine{
+		Scheduler:   &scheduler.QueuedScheduler{},
+		WorkerCount: 100,
+	}
+	e.Run(engine.Request{
+		Url:        "http://www.zhenai.com/zhenghun",
+		ParserFunc: parser.ParseCityList,
+	})
+}
+
+
+func SimpleSchedulerSpider()  {
+	e := engine.ConcurrentEngine{
+		Scheduler:   &scheduler.SimpleScheduler{},
+		WorkerCount: 100,
+	}
+	e.Run(engine.Request{
+		Url:        "http://www.zhenai.com/zhenghun",
+		ParserFunc: parser.ParseCityList,
+	})
+}
+
+
+func SimpleEngineSpider()  {
+
+	e := engine.SimpleEngine{
+	}
+	e.Run(engine.Request{
+		Url:        "http://www.zhenai.com/zhenghun",
+		ParserFunc: parser.ParseCityList,
+	})
+}
+
+
 func main() {
+
+	fmt.Println(os.Getpid())
+	time.Sleep(6 * time.Second)
+
 	e := engine.ConcurrentEngine{
 		//Scheduler:   &scheduler.SimpleScheduler{},
 		Scheduler:   &scheduler.QueuedScheduler{},
-		WorkerCount: 10,
+		WorkerCount: 100,
 	}
+	//
 	//e := engine.SimpleEngine{
 	//}
 	e.Run(engine.Request{
