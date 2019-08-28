@@ -12,7 +12,8 @@ func BenchmarkQueuedSchedulerSpider(b *testing.B)  {
 
 
 func BenchmarkSimpleSchedulerSpider(b *testing.B)  {
-	for i:=0;i<b.N; i++{
+	//for i:=0;i<b.N; i++{
+	for i:=0;i<3; i++{
 		SimpleSchedulerSpider()
 	}
 }
