@@ -5,23 +5,23 @@ import (
 	"fmt"
 )
 
-type Student struct{
-	Id int `json:"id,omitempty"`
+type Student struct {
+	Id   int    `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
-	Age int `json:"age,omitempty"`
+	Age  int    `json:"age,omitempty"`
 }
 
-type Class struct{
-	Id int `json:"id,omitempty"`
+type Class struct {
+	Id       int       `json:"id,omitempty"`
 	Students []Student `json:"students,omitempty"`
 }
 
-type School struct{
-	Id int `json:"id"`
+type School struct {
+	Id      int             `json:"id"`
 	Classes map[int64]Class `json:"classes"`
 }
 
-func basicJSON()  {
+func basicJSON() {
 	var stu Student
 
 	sJson := `{
@@ -29,12 +29,12 @@ func basicJSON()  {
 	"name": "zhangsan",
 	"age": 3
 }`
-	if err := json.Unmarshal([]byte(sJson), &stu); err != nil{
+	if err := json.Unmarshal([]byte(sJson), &stu); err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(stu.Id)
 }
-func arrJSON()  {
+func arrJSON() {
 	var cls Class
 
 	sJson := `{
@@ -58,14 +58,14 @@ func arrJSON()  {
 ]
 }`
 
-	if err := json.Unmarshal([]byte(sJson), &cls); err != nil{
+	if err := json.Unmarshal([]byte(sJson), &cls); err != nil {
 		fmt.Println(err)
 	}
 	//fmt.Println(cls.Id)
 	fmt.Println(cls.Students)
 }
 
-func mapJSON(){
+func mapJSON() {
 	var cls School
 
 	sJson := `{
@@ -111,13 +111,13 @@ func mapJSON(){
 		}
 }`
 
-	if err := json.Unmarshal([]byte(sJson), &cls); err != nil{
+	if err := json.Unmarshal([]byte(sJson), &cls); err != nil {
 		fmt.Println(err)
 	}
 	//fmt.Println(cls.Id)
 	fmt.Println(cls.Classes)
 }
-func nilJSON(){
+func nilJSON() {
 
 	var stu Student
 
@@ -127,7 +127,7 @@ func nilJSON(){
 	"age": 3
 }`
 
-	if err := json.Unmarshal([]byte(sJson), &stu); err != nil{
+	if err := json.Unmarshal([]byte(sJson), &stu); err != nil {
 		fmt.Println(err)
 	}
 	stu.Id = 0
@@ -162,7 +162,7 @@ func nilMapJSON() {
 ]
 }`
 
-	if err := json.Unmarshal([]byte(sJson), &cls); err != nil{
+	if err := json.Unmarshal([]byte(sJson), &cls); err != nil {
 		fmt.Println(err)
 	}
 
@@ -176,9 +176,27 @@ func nilMapJSON() {
 	fmt.Println(string(str))
 }
 
+func typeJSON() {
+	var stu Student
+
+	sJson := `{
+		"id": "1",
+		"name": "zhangsan",
+		"age": 3
+	}`
+	if err := json.Unmarshal([]byte(sJson), &stu); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(stu)
+}
+
 func main() {
 	//arrJSON()
 	//mapJSON()
 	//nilJSON()
-	nilMapJSON()
+	//nilMapJSON()
+	//typeJSON()
+
+	x := 0.01
+	fmt.Println(fmt.Sprintf("%v推币抵扣%v", x, x*1.0/100))
 }
