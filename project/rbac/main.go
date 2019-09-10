@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"golearn/project/rbac/router"
 )
 
 func main() {
@@ -12,6 +13,8 @@ func main() {
 			"message": "pong",
 		})
 	})
+	router.RegisterRouter(r)
+
 	if err := r.Run(); err != nil { // listen and serve on 0.0.0.0:8080
 		fmt.Println("fail to run server", err)
 	}

@@ -1,8 +1,11 @@
 package service
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	services "golearn/project/rbac/utils/bizresp"
+	"io"
 	"net/http"
 )
 
@@ -20,7 +23,7 @@ func success(c *gin.Context, d interface{}) {
 
 // 失败响应
 func fail(c *gin.Context, code string, err error) {
-	// 应统一要求，错误码返回非200
+	// 统一要求，错误码返回非200
 	if e, ok := err.(*services.Error); ok {
 		// 如果是app内的错误类型
 		if code == services.ErrAuthRequired {
@@ -46,4 +49,12 @@ func fail(c *gin.Context, code string, err error) {
 			"_e":        "general",
 		})
 	}
+}
+
+func BindJSON(c *gin.Context, obj interface{}) error {
+	err := c.ShouldBindWith(obj, binding.JSON)
+	if err == io.EOF {
+		return errors.New("empty request body")
+	}
+	return err
 }

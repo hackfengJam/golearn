@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+type SqlHandler struct {
+	Segment []string
+	Param   []interface{}
+}
+
 var db *sqlx.DB
 
 func init() {
