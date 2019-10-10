@@ -23,5 +23,8 @@ func main() {
 	for _, m := range match {
 		fmt.Println(m)
 	}
-	//fmt.Println(match)
+
+	re = regexp.MustCompile("127\\.*\\.0\\.1")
+	match2 := re.FindString(text)
+	fmt.Println(match2)
 }

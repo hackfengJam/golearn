@@ -4,13 +4,34 @@ import (
 	"fmt"
 	"golearn/basic_study/test/gls"
 	"math/rand"
+	"net/url"
 	"os"
 	"reflect"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 	"unsafe"
 )
+
+type UserProfileInfo map[string]interface{}
+
+func (upi UserProfileInfo) GetValue(key string) interface{} {
+	keys := strings.Split(key, ".")
+	return upi.getValue(keys)
+}
+func (upi UserProfileInfo) getValue(keys []string) interface{} {
+	v := upi[keys[0]]
+	if len(keys) == 1 {
+		return v
+	}
+	vMap, ok := v.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	return UserProfileInfo(vMap).getValue(keys[1:])
+}
 
 func mapT() {
 	data := make(map[int64]string, 2)
@@ -32,7 +53,23 @@ func mapT() {
 
 	fmt.Println()
 	fmt.Println(data)
-
+	/*
+			// We consider a cycle to be: sweep termination, mark, mark
+			// termination, and sweep. This function shouldn't return
+			// until a full cycle has been completed, from beginning to
+			// end. Hence, we always want to finish up the current cycle
+			// and start a new one. That means:
+			//
+				1.在扫描终止，标记或循环N的标记终止中，等待直到标记终止N完成并过渡到扫描N。
+				2.在扫描N中，帮助进行扫描N。
+			At this point we can begin a full cycle N+1.
+				3.通过开始扫描终止N + 1触发周期N + 1
+				4.等待标记终止N + 1完成。
+				5.帮助扫描N + 1，直到完成。
+		   必须编写所有这些文件来处理GC可能会自行前进的事实。例如，当我们阻塞直到标记终止N时，我们可能会在周期N + 2中醒来。
+	*/
+	vMap := make(map[string]interface{}, 2)
+	fmt.Println(UserProfileInfo(vMap).getValue([]string{"1"}))
 }
 
 func arrT() {
@@ -206,8 +243,54 @@ func GoidLocalT() {
 func reflectT() {
 	os.OpenFile("./test.txt", os.O_RDWR, 0)
 	fmt.Println(reflect.ValueOf(nil), reflect.TypeOf(nil))
-	var value interface{}
+	//var value interface{}
 
+}
+func mapKeyT() {
+	var m = map[string]string{}
+	m["a"] = "a"
+	m["b"] = "b"
+	fmt.Println(m)
+	fmt.Println(m["a"])
+	c, e := m["c"]
+	fmt.Printf("c: %v", m["c"])
+	fmt.Printf("c: %v, e: %v", c, e)
+}
+
+func ParseIntT() {
+	fmt.Println(strconv.ParseInt("-1", 10, 64))
+	fmt.Println(strconv.Atoi("-1"))
+	fmt.Println(strconv.ParseInt("-1", 10, 0))
+
+	s1, _ := strconv.ParseInt("-1", 10, 64)
+	fmt.Println(reflect.TypeOf(s1))
+
+	s2, _ := strconv.Atoi("-1")
+	fmt.Println(reflect.TypeOf(s2))
+
+	s3, _ := strconv.ParseInt("-1", 10, 0)
+	fmt.Println(reflect.TypeOf(s3))
+
+}
+
+func TimeDurationT() {
+	//a := time.Duration(1)
+	a := time.Duration(-1) * time.Second
+	b := time.Duration(1) * time.Second
+	fmt.Println(a.Nanoseconds())
+	fmt.Println(a.Hours() * 3600)
+	fmt.Println(a.Seconds())
+	fmt.Println(a < b)
+}
+
+func UrlEncodeT() {
+	iUrl := "http://www.baidu.com/baidu哈哈/heh?a=1"
+	urlList := strings.Split(iUrl, "/")
+
+	for i := range urlList {
+		urlList[i] = url.PathEscape(urlList[i])
+	}
+	fmt.Println(strings.Join(urlList, "/"))
 }
 
 func main() {
@@ -227,5 +310,18 @@ func main() {
 	//RuntimeStackT()
 	//fmt.Println(gls.GetGoid())
 	//GoidLocalT()
-	reflectT()
+	//reflectT()
+	//ParseIntT()
+	//mapKeyT()
+	//UrlEncodeT()
+
+	//var start time.Time
+	//start = time.Now()
+	//fmt.Printf("GoodsReviewList elapsed: %v", time.Now().Sub(start))
+
+	var a []*int
+	for i := range a {
+		fmt.Println("1", i)
+	}
+	fmt.Println(1)
 }
