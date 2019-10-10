@@ -1,6 +1,7 @@
 package algo
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -37,6 +38,25 @@ func Knapsack01Dp01(w, v []int, C int) int {
 			}
 		}
 	}
+
+	// backtrack
+	var ret []int
+	i := len(w) - 1
+	j := C
+	for {
+		if j == 0 {
+			break
+		}
+		//if i == 0 {
+		//	break
+		//}
+		if memo[i][j] != memo[i-1][j] {
+			ret = append(ret, i)
+			j -= w[i]
+		}
+		i--
+	}
+	fmt.Println(ret)
 
 	return memo[len(w)-1][C]
 }
