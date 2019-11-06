@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"golearn/basic_study/test/gls"
+	"golearn/basic_study/test/sdk"
+	"gopkg.in/yaml.v2"
 	"math/rand"
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -293,6 +299,357 @@ func UrlEncodeT() {
 	fmt.Println(strings.Join(urlList, "/"))
 }
 
+func mapModifyT(data interface{}) {
+	if v, ok := data.(map[string]interface{}); !ok {
+		return
+	} else {
+		v["a"] = "haha"
+	}
+	return
+}
+
+func JsonMapInterfaceT() {
+	var data map[string]interface{}
+	jsonStr := `{"a": 1, "b": "abcd", "c": 3}`
+
+	fmt.Println(data)
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(data)
+	mapModifyT(data)
+	fmt.Println(data)
+
+	jsonByte, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(jsonByte))
+
+}
+
+func JsonMapStructT() {
+	var data map[string]bool
+	jsonStr := `{"a": 1, "b": true, "c": 3}`
+
+	fmt.Println(data)
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(data)
+	mapModifyT(data)
+	fmt.Println(data)
+
+	jsonByte, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(jsonByte))
+
+}
+
+var getRegexp = regexp.MustCompile("^get.(.+?)(?:\\{([^\\}]+)\\})?(?:\\[(\\d+)\\])?$")
+
+func VariableGetCreator(name string) {
+	if ma := getRegexp.FindStringSubmatch(name); len(ma) == 4 {
+		fmt.Println(ma)
+	}
+}
+
+func regexpT() {
+	VariableGetCreator("get._vars{mall_id}")
+}
+
+func bitOrT() {
+	fmt.Println(1 | 2 | 4)
+}
+
+func gRpcDebugT() {
+	/*
+			./bin/grpcdebug -data='{"buyer_id":35899596,"malls":[{"mall_id":100003,"auto_select_mall_coupon":true,"goods":[{"goods_id":11160,"goods_sku_id":40818,"remain_price":5000,"can_use_promotion_id":[520,535],"goods_quantity":1,"goods_unit_price":5000},{"goods_id":12544,"goods_sku_id":81895,"remain_price":1400,"can_use_promotion_id":[535],"goods_quantity":1,"goods_unit_price":1400}]}],"auto_select_system_coupon":true,"plt":30,"selected_system_promotion_id":[535],"promotions":[{"promotion_id":520,"link":"/x/promotion.html?activity_id=520","label":"跨店满减","name":"满50减15,满80减35,满100减50","use_start_time":1569730200,"use_end_time":1602086400,"promotion_type":1,"rules":[{"condition_type":1,"condition_value":10000,"discount_type":1,"discount_value":5000,"mall_cost_type":1,"mall_cost_value":1500},{"condition_type":1,"condition_value":8000,"discount_type":1,"discount_value":3500,"mall_cost_type":1,"mall_cost_value":3500},{"condition_type":1,"condition_value":5000,"discount_type":1,"discount_value":1500,"mall_cost_type":1,"mall_cost_value":4900}]},{"promotion_id":535,"link":"/x/promotion.html?activity_id=535","label":"满2免1","name":"满2免1","use_start_time":1571301600,"use_end_time":1571500800,"promotion_type":1,"rules":[{"condition_type":2,"condition_value":2,"discount_type":2,"discount_value":1,"system_cost_value":10}]}],"last_selected_type":1}' -addr=127.0.0.1:9201 -method=/ptcoupon.Service/GetOrderDiscount -ctx='{"uid":1,"x-reqid":"abcdefg"}'
+
+
+		./bin/grpcdebug -data='{"uids": [1094505]}' -addr=192.168.18.59:9701 -method=/ptprofile.Service/SyncUsersProfile
+	*/
+}
+
+func shiftRightLogicalT() {
+	s := 1
+	s += 1 << 1
+	fmt.Println(s)
+}
+
+// mt :xxxx -> xxx
+func Sign2Authorization(prefix string, sign string) string {
+	return strings.Join([]string{
+		prefix, sign,
+	}, " ")
+}
+
+// xxxx -> mt :xxxxx
+func Authorization2Sign(prefix string, authorization string) string {
+	return strings.TrimLeft(authorization, prefix+" ")
+}
+
+func Authorization4SignT() {
+	prefix := "hackfun"
+	authorization := "hackfun test"
+	sign := Authorization2Sign(prefix, authorization)
+	fmt.Println(sign)
+	fmt.Println(Sign2Authorization(prefix, sign))
+}
+
+func NewClientT() {
+	c := sdk.NewClient("ak-7QKrWXH8QZf3O8Tf", "40ZGi4fZsNhB9WaYE3fYdI9cBsievlL3", "http", "127.0.0.1", 8081, 3)
+
+	// GET Request Test
+	fmt.Println("GET /api/v1/do/ping")
+
+	statusCode, resp := c.Get("/x-admin/ping", "", nil)
+
+	fmt.Println("Status Code: " + fmt.Sprint(statusCode))
+	fmt.Println(resp)
+
+	fmt.Println(strings.Repeat("-", 50))
+
+	// POST Request Test
+	body := `{"echo":{"int":1,"str":"Hello World","unicode":"你好，世界！","none":null,"boolean":true}}`
+	fmt.Println("GET /x-admin/echo")
+	fmt.Println(body)
+
+	statusCode, resp = c.Post("/api/v1/do/echo", "", body, nil)
+
+	fmt.Println("Status Code: " + fmt.Sprint(statusCode))
+	fmt.Println(resp)
+}
+
+type Entity struct {
+	A int
+}
+
+func SortSliceT() {
+	testCase := []Entity{
+		{A: 1},
+		{A: 3},
+		{A: 2},
+	}
+	fmt.Println(testCase)
+	sort.Slice(testCase, func(i, j int) bool {
+		return testCase[i].A > testCase[j].A
+	})
+	fmt.Println(testCase)
+
+}
+
+type Clazz struct {
+}
+
+func NewObj() {
+	var obj *Clazz
+	if obj == nil {
+		fmt.Println()
+	}
+}
+
+const dateFormat = "2006-01-02"
+
+func DateFormatT() {
+	now := time.Now()
+	fmt.Println(now.Format(dateFormat))
+	local, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(now.UTC())
+	fmt.Println(now.UTC().In(local))
+	fmt.Println(now.IsZero())
+	fmt.Println(now)
+	fmt.Println(now.In(local))
+}
+
+func MapIfT() {
+	ids := []uint64{1, 2, 3, 4}
+	var idsMap map[uint64]bool
+	idsMap = make(map[uint64]bool, len(ids))
+	for _, id := range ids {
+		idsMap[id] = true
+	}
+
+	if idsMap[1] {
+		fmt.Println(idsMap[1])
+	}
+
+	idsMap[2] = false
+	if idsMap[2] {
+		fmt.Println(idsMap[2])
+	}
+
+	if idsMap[6] {
+		fmt.Println("idsMap[6]...")
+	}
+}
+
+type newT struct {
+}
+
+func (n *newT) NewTFunc1() {
+	fmt.Println("NewTFunc1")
+}
+func (n *newT) NewTFunc2() {
+	fmt.Println("NewTFunc2")
+}
+func NewT() {
+	var nS newT
+	var nSC *newT
+	nS.NewTFunc1()
+	nSC.NewTFunc1()
+}
+
+func ContextT() {
+	type favContextKey string
+
+	f := func(ctx context.Context, k favContextKey) {
+		if v := ctx.Value(k); v != nil {
+			fmt.Println("found value:", v)
+			return
+		}
+		fmt.Println("key not found:", k)
+	}
+
+	k := favContextKey("language")
+	c := context.Background()
+	ctx := context.WithValue(c, k, "Go")
+
+	f(ctx, k)
+	f(ctx, favContextKey("color"))
+}
+
+func StringsUtils() {
+
+	//strings.Map()
+	//strings.Join()
+}
+
+func interfaceJson() string {
+	return `1`
+}
+
+func InterfaceJsonT() {
+	var s *interface{}
+	jsonStr := interfaceJson()
+	err := json.Unmarshal([]byte(jsonStr), &s)
+	if err != nil {
+		//fmt.Println(err)
+		panic(err)
+	}
+	v, err := json.Marshal(s)
+	if err != nil {
+		//fmt.Println(err)
+		panic(err)
+	}
+	var value []byte
+	value = []byte{}
+	fmt.Println(*s)
+	fmt.Println(string(v))
+	fmt.Println(len(value))
+	fmt.Println(string(value))
+}
+
+type Foo2 struct {
+}
+type Foo struct {
+	A string
+	B int
+	//c int
+	D int
+	E *string
+	F *Foo2
+}
+
+func setFoo(foo *Foo, field string, value string) {
+	v := reflect.ValueOf(foo).Elem().FieldByName(field)
+	if v.IsValid() {
+		v.SetString(value)
+	}
+}
+
+func printFoo() {
+	foo := &Foo{
+		A: "1",
+	}
+	s := reflect.ValueOf(foo).Elem()
+	typeOfT := s.Type()
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		fmt.Printf("%d: %s %s = %v\n", i,
+			typeOfT.Field(i).Name, f.Type(), f.Interface())
+	}
+}
+
+func setFooT() {
+	foo := &Foo{
+		A: "1",
+	}
+	fmt.Println(foo)
+	setFoo(foo, "A", "2")
+	fmt.Println(foo)
+}
+
+func ReflectFieldByNameT() {
+	printFoo()
+	//setFooT()
+}
+
+func convert(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			m2[k.(string)] = convert(v)
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convert(v)
+		}
+	}
+	return i
+}
+
+const s = `
+Services1:
+-   Orders:
+    -   ID: $save ID1
+        SupplierOrderCode: $SupplierOrderCode
+    -   ID: $save ID2
+        SupplierOrderCode: 111111
+Services2:
+-   Orders:
+    -   ID: $save ID1
+        SupplierOrderCode: $SupplierOrderCode
+    -   ID: $save ID2
+        SupplierOrderCode: 111111
+`
+
+func YamlToJSONT() {
+	fmt.Printf("Input: %s\n", s)
+	var body interface{}
+	if err := yaml.Unmarshal([]byte(s), &body); err != nil {
+		panic(err)
+	}
+
+	body = convert(body)
+
+	if b, err := json.Marshal(body); err != nil {
+		panic(err)
+	} else {
+		fmt.Printf("Output: %s\n", b)
+	}
+}
+
 func main() {
 	//mapT()
 	//arrT()
@@ -319,9 +676,28 @@ func main() {
 	//start = time.Now()
 	//fmt.Printf("GoodsReviewList elapsed: %v", time.Now().Sub(start))
 
-	var a []*int
-	for i := range a {
-		fmt.Println("1", i)
-	}
-	fmt.Println(1)
+	//var a []*int
+	//for i := range a {
+	//	fmt.Println("1", i)
+	//}
+	//fmt.Println(1)
+
+	//JsonMapInterfaceT()
+	//JsonMapStructT()
+	//regexpT()
+	//bitOrT()
+	//shiftRightLogicalT()
+	//gRpcDebugT()
+
+	//Authorization4SignT()
+	//NewClientT()
+	//SortSliceT()
+	//DateFormatT()
+	//MapIfT()
+	//NewT()
+	//ContextT()
+	//StringsUtils()
+	//InterfaceJsonT()
+	//ReflectFieldByNameT()
+	YamlToJSONT()
 }
