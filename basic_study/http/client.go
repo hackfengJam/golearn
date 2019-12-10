@@ -9,8 +9,11 @@ import (
 func main() {
 	request, err := http.NewRequest(
 		http.MethodGet,
-		"http://www.baidu.com", nil)
-	request.Header.Add("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1")
+		"http://127.0.0.1:18081/index", nil)
+	if err != nil {
+		panic(err)
+	}
+	request.Header.Add("X-Token", "Y2Y1YzBlYWQtNjAwYy00YWExLWIxN2EtMjE5YjhmMDU3YWIwLTQ0MjQwLTMxNjY=")
 
 	client := http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {

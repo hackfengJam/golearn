@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golearn/basic_study/test/gls"
 	"golearn/basic_study/test/sdk"
 	"gopkg.in/yaml.v2"
+	"math"
 	"math/rand"
 	"net/url"
 	"os"
@@ -109,6 +111,9 @@ func mulZero() {
 
 	str := "%0" + fmt.Sprintf("%d", 3) + "s"
 	fmt.Println(fmt.Sprintf(str, "0"))
+}
+func mulChar() {
+	fmt.Println(strings.Repeat("*", 3))
 }
 
 func sliceT() {
@@ -620,12 +625,14 @@ func convert(i interface{}) interface{} {
 }
 
 const s = `
+# 这是Service1
 Services1:
 -   Orders:
     -   ID: $save ID1
         SupplierOrderCode: $SupplierOrderCode
     -   ID: $save ID2
         SupplierOrderCode: 111111
+# 这是Service2
 Services2:
 -   Orders:
     -   ID: $save ID1
@@ -650,6 +657,180 @@ func YamlToJSONT() {
 	}
 }
 
+type jsonTT struct {
+	GRPC       string `json:",omitempty"`
+	GRPCUseTLS string `json:",omitempty"`
+	CheckID    string `json:",omitempty"`
+}
+
+func JsonT() {
+	s := `
+{
+"grpc": "1","gRPC": "2",
+"gRPCUseTLS": "1","gRPC_use_tls": "2"
+}
+`
+	var jsonTTT jsonTT
+	if err := json.Unmarshal([]byte(s), &jsonTTT); err != nil {
+		panic(err)
+	} else {
+		fmt.Printf("Output: %v\n", jsonTTT)
+	}
+}
+
+//func JsonToYamlT() {
+//	s := `
+//{
+//    "addr": ":8083",
+//    "accesslog":{
+//        "filename": "./log/access/ptapollo.log",
+//        "request_body": true,
+//        "response_body": true
+//    },
+//    "tracing": {
+//        "zipkin": {
+//            "http_collector": "http://zipkin.host:9411/api/v1/spans"
+//        }
+//    },
+//	"metrics": {
+//		"addr": ":8084"
+//	},
+//    "consul": {
+//        "server": {
+//            "address": "http://consul.host:8500",
+//            "datacenter": ""
+//        },
+//        "registration": {
+//            "id": "",
+//            "tags": ["debug"],
+//            "address":"localhost"
+//        }
+//    },
+//    "iswitch_cfg": {
+//        "broker":"qconf",
+//        "content":{
+//          "_qconf_node":"/conf/test/switch"
+//        }
+//    }
+//}
+//`
+//	var body interface{}
+//	if err := json.Unmarshal([]byte(s), &body); err != nil {
+//		panic(err)
+//	} else {
+//		fmt.Printf("Output: %v\n", body)
+//	}
+//
+//	bs, err := yaml.Marshal(body)
+//	if err != nil {
+//		panic(err)
+//	} else {
+//		fmt.Printf("Output: %v\n", string(bs))
+//	}
+//}
+
+func IntConvertT() {
+	fmt.Println(int32(2147483647))
+}
+
+const (
+	MinMaskingLength = 3
+	MaskingLength    = 6
+)
+
+func Masking(src string, start int, length int, mask string) (des string) {
+	if mask == "" {
+		mask = "*"
+	}
+	mask = strings.Repeat(mask, MaskingLength)
+	if len(src) <= MinMaskingLength {
+		return mask
+	}
+	des = src[:start] + mask + src[start+length:]
+	return
+}
+
+func SwitchT() {
+	a := []int{1, 2, 3, 4}
+	switch {
+	case a[0] == 1:
+		fmt.Println("a[0]")
+		fallthrough
+	case a[1] == 2:
+		fmt.Println("a[1]")
+		fallthrough
+	case a[2] == 3:
+		fmt.Println("a[2]")
+	}
+
+	return
+}
+
+func CeilT() {
+	v := 1
+	//v = v * (90 / 100)
+	v = int(math.Ceil(float64(v*90) / 100))
+	s := float64(v*90) / 100
+	fmt.Println(v)
+	fmt.Println(s)
+}
+
+func TimeT() {
+	now := time.Now()
+	fmt.Println(now)
+	fmt.Println(now.Add(-time.Hour))
+	fmt.Println(now.Add(time.Hour))
+	now.Add(-time.Hour).Unix()
+}
+
+func ErrorT() (err error) {
+	err = errors.New("duplicate record")
+
+	defer func() {
+		fmt.Printf("record, err<%v>\n", err)
+	}()
+	if 1 == 1 {
+		err := errors.New("1 == 1 error")
+		fmt.Printf("1 == 1 err<%v>\n", err)
+		return err
+	}
+	return
+}
+
+func timeT() {
+	now := time.Now()
+	fmt.Println(now)
+	fmt.Println(now.AddDate(1, 0, 0))
+	fmt.Println(now.AddDate(0, 3, 3))
+	fmt.Println(now.AddDate(1, 1, 1))
+}
+
+func deferT() {
+	//defer deferT()
+
+	/*
+		//defer X(a, b, c)
+		method = X
+		method.args[0] = a
+		method.args[1] = b
+		method.args[2] = c
+	*/
+
+	/*
+		//defer X(){ print(a) }
+		method = X
+	*/
+
+	/*
+		method.Invoked(...)
+	*/
+}
+
+func intPointerT() {
+	var i *int
+	i = append(i, 1)
+
+}
 func main() {
 	//mapT()
 	//arrT()
@@ -699,5 +880,17 @@ func main() {
 	//StringsUtils()
 	//InterfaceJsonT()
 	//ReflectFieldByNameT()
-	YamlToJSONT()
+	//JsonT()
+	//mulChar()
+	//CeilT()
+	//YamlToJSONT()
+	//JsonToYamlT()
+	//SwitchT()
+	//TimeT()
+	//_ = ErrorT()
+	//timeT()
+
+	deferT()
+
+	return
 }

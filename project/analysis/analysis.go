@@ -49,6 +49,7 @@ type storageBlock struct {
 }
 
 var log = logrus.New()
+
 //var redisCli redis.Client
 
 func init() {
@@ -177,7 +178,7 @@ func logConsumer(logChannel chan string, pvChannel, uvChannel chan urlData) erro
 		data := cutLogFetchData(logStr)
 
 		// uid
-		// 说明： 课程中模拟生成uid,   md5(refer+ua)
+		// 说明： 模拟生成uid,   md5(refer+ua)
 		hasher := md5.New()
 		hasher.Write([]byte(data.refer + data.ua))
 		uid := hex.EncodeToString(hasher.Sum(nil))

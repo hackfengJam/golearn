@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../../pipeline"
 	"bufio"
 	"fmt"
+	"golearn/project/gointro/pipeline"
 	"os"
 	"strconv"
 )
@@ -86,7 +86,7 @@ func createNetworkPipeline(
 	// init
 	pipeline.Init()
 
-	sortAddr := [] string{}
+	sortAddr := []string{}
 
 	for i := 0; i < chunkCount; i++ {
 		file, err := os.Open(filename)

@@ -103,8 +103,9 @@ func (c *Client) Run(method, path, query, body string, headers map[string]string
 		panic("Unsupported HTTP Method: " + method)
 	}
 
+	rPath := path
 	if len(query) > 0 {
-		path = path + query
+		rPath = path + "?" + query
 	}
 
 	authHeaders := c.GetAuthHeader(headers, method, path, query, body)
@@ -114,7 +115,7 @@ func (c *Client) Run(method, path, query, body string, headers map[string]string
 
 	httpClient := &http.Client{}
 
-	req, err := http.NewRequest(method, c.Scheme+"://"+c.Host+path, strings.NewReader(body))
+	req, err := http.NewRequest(method, c.Scheme+"://"+c.Host+rPath, strings.NewReader(body))
 	if err != nil {
 		panic(err)
 	}

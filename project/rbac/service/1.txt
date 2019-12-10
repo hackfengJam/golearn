@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ptuser
+  name: ptuser
+  namespace: default
+spec:
+  ports:
+  - port: 7101
+    protocol: TCP
+    targetPort: 7101
+  selector:
+    app: ptuser
+  type: ClusterIP
