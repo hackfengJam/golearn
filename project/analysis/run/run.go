@@ -19,7 +19,7 @@ type resource struct {
 }
 
 func ruleResource() []resource {
-	var res [] resource
+	var res []resource
 	r1 := resource{ // 首页
 		url:    "http://localhost:8888/",
 		target: "",
@@ -41,7 +41,7 @@ func ruleResource() []resource {
 	res = append(append(append(res, r1), r2), r3)
 	return res
 }
-func buildUrl(res [] resource) []string {
+func buildUrl(res []resource) []string {
 	var list []string
 	for _, resItem := range res {
 
@@ -80,9 +80,9 @@ func randInt(min, max int) int {
 
 func main() {
 	total := flag.Int("total", 100, "how many rows by created")
-	filePath := flag.String("filePath", "/User/Hack/nginx/logs/dig.log", "log file path")
+	filePath := flag.String("filePath", "./logs/dig.log", "log file path")
 	flag.Parse()
-	var uaList = []string{}
+	var uaList = []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36"}
 	//fmt.Println(*total, *filePath)
 	// 需要构造出真是的网站url集合
 	res := ruleResource()
@@ -92,9 +92,9 @@ func main() {
 	//按照要求，生成 $total 行日志内容，源自上面的这个集合
 	logStr := ""
 	for i := 0; i <= *total; i++ {
-		currentUrl := list [randInt(0, len(list)-1)]
-		referUrl := list [randInt(0, len(list)-1)]
-		ua := uaList[randInt(0, len(uaList)-1)]
+		currentUrl := list[randInt(0, len(list))]
+		referUrl := list[randInt(0, len(list))]
+		ua := uaList[randInt(0, len(uaList))]
 
 		logStr = logStr + makeLog(currentUrl, referUrl, ua) + "\n"
 		//ioutil.WriteFile(*filePath, []byte(logStr), 0644)

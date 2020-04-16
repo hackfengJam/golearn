@@ -83,4 +83,4 @@ ALTER TABLE access_key_role
 
 
 INSERT INTO `access_key` (`id`, `ak_id`, `ak_secret`, `is_root`, `status`, `updated_time`, `created_time`)
-VALUES(1, 'LTAICfL25lEQjVKf', 'gwH4r9ysGwrlHRlKGAjBUhlNqx4VUX', 1, 1, '2019-08-28 16:36:30', '2019-08-28 16:36:30');
+VALUES(1, 'ss', 'ss', 1, 1, '2019-08-28 16:36:30', '2019-08-28 16:36:30');

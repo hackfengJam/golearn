@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"golearn/basic_study/test/gls"
 	"golearn/basic_study/test/sdk"
-	"gopkg.in/yaml.v2"
+	"golearn/basic_study/test/util/simpleaes"
 	"math"
 	"math/rand"
 	"net/url"
@@ -19,8 +22,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+	"unicode/utf8"
 	"unsafe"
+
+	"gopkg.in/yaml.v2"
 )
 
 type UserProfileInfo map[string]interface{}
@@ -116,7 +123,7 @@ func mulChar() {
 	fmt.Println(strings.Repeat("*", 3))
 }
 
-func sliceT() {
+func sliceCapT() {
 	a := []int{1, 2, 3}
 	fmt.Println(a)
 	b := a[:1]
@@ -132,11 +139,22 @@ func sliceT() {
 
 }
 
+func sliceAppendT() {
+	a := []int{1, 2, 3}
+	b := []int{1, 2, 3}
+	// a = append(a, b...)
+	var actIdList []int
+	actIdList = append(actIdList, a...)
+	actIdList = append(actIdList, b...)
+	fmt.Println(a)
+	fmt.Println(actIdList)
+}
+
 func IntT() {
-	//i := 10
-	//i = 2 / 3
+	// i := 10
+	// i = 2 / 3
 	a := []int{1, 2, 3, 4, 5}
-	//segCount := len(a) /
+	// segCount := len(a) /
 	fmt.Println(a[:(len(a)/3)*3])
 
 }
@@ -175,9 +193,9 @@ func ChanT() {
 		END:
 		}(i)
 	}
-	//closeC <- 0
-	//closeC <- 0
-	//closeC <- 0
+	// closeC <- 0
+	// closeC <- 0
+	// closeC <- 0
 	close(closeC)
 
 	time.Sleep(60 * time.Second)
@@ -254,7 +272,7 @@ func GoidLocalT() {
 func reflectT() {
 	os.OpenFile("./test.txt", os.O_RDWR, 0)
 	fmt.Println(reflect.ValueOf(nil), reflect.TypeOf(nil))
-	//var value interface{}
+	// var value interface{}
 
 }
 func mapKeyT() {
@@ -285,7 +303,7 @@ func ParseIntT() {
 }
 
 func TimeDurationT() {
-	//a := time.Duration(1)
+	// a := time.Duration(1)
 	a := time.Duration(-1) * time.Second
 	b := time.Duration(1) * time.Second
 	fmt.Println(a.Nanoseconds())
@@ -302,6 +320,30 @@ func UrlEncodeT() {
 		urlList[i] = url.PathEscape(urlList[i])
 	}
 	fmt.Println(strings.Join(urlList, "/"))
+}
+
+func UrlT() {
+	u := url.Values{}
+
+	var data map[string]string
+	jsonStr := `
+{alipay_trade_query_response":
+  {"code":"10000","msg":"Success","buyer_logon_id":"793***@qq.com","buyer_pay_amount":"0.00","buyer_user_id":"2088902521835964","invoice_amount":"0.00","out_trade_no":"t-8072603435828035624","point_amount":"0.00","receipt_amount":"0.00","send_pay_date":"2020-01-06 20:23:21","total_amount":"0.01","trade_no":"2020010622001435960568692210","trade_status":"TRADE_SUCCESS"},
+
+  "sign":"O55VLcHhBm9zNk3rqfwlUCLB1qwy8E9DmTdBukGz8+gFkpc7SNSbMh9E2/3BT7FtVX2zEtzgHGFsEcEWjHMS2568wRepPDX+rcMNYKwha+X1Zz44FUPkH03edQ2E2aj+I4vBiJsDSkErcrAwJS/7A2zQKDx8nE7kzonnrKYfgcpL8ntS3pl7ZUTjoLvdAUtkhoSyAOo463sqZAIo1LdQZo3G6S9maJMdFmDXGUpvwNHzNqxegl1rfta8IC6PPfl2aMoSAAP6qr59tH5KiN5c3t7smE3a94MhPuApORRm/vM6mzW87RNl5l37JAVqKuXIcD5tKqbLIOksYYMb+gFVqA=="}`
+	jsonStr = `{"code":"10000","msg":"Success","buyer_logon_id":"793***@qq.com","buyer_pay_amount":"0.00","buyer_user_id":"2088902521835964","invoice_amount":"0.00","out_trade_no":"t-8072603435828035624","point_amount":"0.00","receipt_amount":"0.00","send_pay_date":"2020-01-06 20:23:21","total_amount":"0.01","trade_no":"2020010622001435960568692210","trade_status":"TRADE_SUCCESS"}`
+
+	fmt.Println(data)
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(data)
+	for k, v := range data {
+		u.Add(k, v)
+	}
+
+	fmt.Println(u.Encode())
 }
 
 func mapModifyT(data interface{}) {
@@ -377,6 +419,9 @@ func gRpcDebugT() {
 
 
 		./bin/grpcdebug -data='{"uids": [1094505]}' -addr=192.168.18.59:9701 -method=/ptprofile.Service/SyncUsersProfile
+
+
+		./bin/grpcdebug -data='{"contract_status": 4}' -addr=127.0.0.1:8001 -method=/pay.Service/TestGrpc
 	*/
 }
 
@@ -404,30 +449,6 @@ func Authorization4SignT() {
 	sign := Authorization2Sign(prefix, authorization)
 	fmt.Println(sign)
 	fmt.Println(Sign2Authorization(prefix, sign))
-}
-
-func NewClientT() {
-	c := sdk.NewClient("ak-7QKrWXH8QZf3O8Tf", "40ZGi4fZsNhB9WaYE3fYdI9cBsievlL3", "http", "127.0.0.1", 8081, 3)
-
-	// GET Request Test
-	fmt.Println("GET /api/v1/do/ping")
-
-	statusCode, resp := c.Get("/x-admin/ping", "", nil)
-
-	fmt.Println("Status Code: " + fmt.Sprint(statusCode))
-	fmt.Println(resp)
-
-	fmt.Println(strings.Repeat("-", 50))
-
-	// POST Request Test
-	body := `{"echo":{"int":1,"str":"Hello World","unicode":"你好，世界！","none":null,"boolean":true}}`
-	fmt.Println("GET /x-admin/echo")
-	fmt.Println(body)
-
-	statusCode, resp = c.Post("/api/v1/do/echo", "", body, nil)
-
-	fmt.Println("Status Code: " + fmt.Sprint(statusCode))
-	fmt.Println(resp)
 }
 
 type Entity struct {
@@ -534,8 +555,8 @@ func ContextT() {
 
 func StringsUtils() {
 
-	//strings.Map()
-	//strings.Join()
+	// strings.Map()
+	// strings.Join()
 }
 
 func interfaceJson() string {
@@ -547,12 +568,12 @@ func InterfaceJsonT() {
 	jsonStr := interfaceJson()
 	err := json.Unmarshal([]byte(jsonStr), &s)
 	if err != nil {
-		//fmt.Println(err)
+		// fmt.Println(err)
 		panic(err)
 	}
 	v, err := json.Marshal(s)
 	if err != nil {
-		//fmt.Println(err)
+		// fmt.Println(err)
 		panic(err)
 	}
 	var value []byte
@@ -568,7 +589,7 @@ type Foo2 struct {
 type Foo struct {
 	A string
 	B int
-	//c int
+	// c int
 	D int
 	E *string
 	F *Foo2
@@ -605,7 +626,7 @@ func setFooT() {
 
 func ReflectFieldByNameT() {
 	printFoo()
-	//setFooT()
+	// setFooT()
 }
 
 func convert(i interface{}) interface{} {
@@ -678,9 +699,9 @@ func JsonT() {
 	}
 }
 
-//func JsonToYamlT() {
+// func JsonToYamlT() {
 //	s := `
-//{
+// {
 //    "addr": ":8083",
 //    "accesslog":{
 //        "filename": "./log/access/ptapollo.log",
@@ -712,8 +733,8 @@ func JsonT() {
 //          "_qconf_node":"/conf/test/switch"
 //        }
 //    }
-//}
-//`
+// }
+// `
 //	var body interface{}
 //	if err := json.Unmarshal([]byte(s), &body); err != nil {
 //		panic(err)
@@ -727,7 +748,7 @@ func JsonT() {
 //	} else {
 //		fmt.Printf("Output: %v\n", string(bs))
 //	}
-//}
+// }
 
 func IntConvertT() {
 	fmt.Println(int32(2147483647))
@@ -768,7 +789,7 @@ func SwitchT() {
 
 func CeilT() {
 	v := 1
-	//v = v * (90 / 100)
+	// v = v * (90 / 100)
 	v = int(math.Ceil(float64(v*90) / 100))
 	s := float64(v*90) / 100
 	fmt.Println(v)
@@ -806,7 +827,7 @@ func timeT() {
 }
 
 func deferT() {
-	//defer deferT()
+	// defer deferT()
 
 	/*
 		//defer X(a, b, c)
@@ -827,70 +848,626 @@ func deferT() {
 }
 
 func intPointerT() {
-	var i *int
-	i = append(i, 1)
+	// var i *int
+	// i = append(i, 1)
 
 }
+
+func TimeAddT() {
+	fmt.Println(
+		time.Date(2020, 1, 19, 23, 59, 59, 0, time.Local).AddDate(0, 0, 31))
+}
+
+func GoschedT() {
+	// go func() {
+	//	fmt.Println(1)
+	//	runtime.Gosched()
+	//	fmt.Println(2)
+	// }()
+	// go func() {
+	//	fmt.Println(3)
+	//	runtime.Gosched()
+	//	fmt.Println(4)
+	// }()
+	// go func() {
+	//	fmt.Println(5)
+	//	runtime.Gosched()
+	//	fmt.Println(6)
+	// }()
+	//
+	// time.Sleep(1 * time.Second)
+
+	// selectT()
+
+	// xx := &a{A: -1, B: -2}
+	// fmt.Println(xx)
+	// PointerT(xx)
+	// PointerT(*xx)
+	// fmt.Println(xx)
+
+}
+
+func deferPanicT() {
+	defer func() {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println("111")
+		}()
+		panic(333)
+	}()
+	// panic(333)
+	//
+	// defer func() {
+	//	fmt.Println(1 / 0)
+	// }()
+	fmt.Println(4444)
+}
+
+func PointerT(xx *a) {
+	xx.A = 1
+	xx.B = 2
+	return
+}
+
+func say(s string) {
+	for i := 0; i < 2; i++ {
+		runtime.Gosched()
+		fmt.Println(s)
+	}
+}
+
+var closeChan chan byte
+
+type a struct {
+	A int
+	B int
+}
+
+var (
+	chanA chan int
+	chanB chan int
+	chanC chan a
+)
+
+func selectT() {
+	closeChan = make(chan byte)
+	chanA = make(chan int)
+	chanB = make(chan int)
+	chanC = make(chan a)
+	go selectA()
+	go selectB()
+	go selectC()
+	time.Sleep(1 * time.Second)
+	// close(closeChan)
+	// close(chanA)
+	close(chanC)
+	time.Sleep(1000 * time.Second)
+}
+
+func Close() {
+	close(closeChan)
+}
+func selectA() {
+	select {
+	case v := <-chanA:
+		fmt.Println(v)
+	case <-closeChan:
+		fmt.Println("close selectA")
+		break
+	}
+}
+func selectB() {
+	select {
+	case v := <-chanB:
+		fmt.Println(v)
+	case <-closeChan:
+		fmt.Println("close selectB")
+		break
+	}
+}
+func selectC() {
+	select {
+	case v := <-chanC:
+		fmt.Println(v)
+	case <-closeChan:
+		fmt.Println("close selectC")
+		break
+	}
+}
+
+type IntError int
+
+const (
+	IEOthers IntError = 0
+)
+
+func AtomicT() {
+	a := atomic.Value{}
+	mapX := &map[string]int{
+		"1": 1,
+		"2": 2,
+	}
+	a.Store(mapX)
+	fmt.Println(a)
+
+	v := a.Load().(*map[string]int)
+	fmt.Println(v)
+	vv := a.Load().(map[string]int)
+	fmt.Println(vv)
+}
+func UnicodeT() {
+	a := "\xFF\xFD"
+	b := []byte{0xFF, 0xFD}
+	c := "\xbd\xb2\x3d\xbc\x20\xe2\x8c\x98"
+	d := "\xef\xbf\xbd"
+	s := "�"
+	fmt.Println(a)
+	fmt.Println(s)
+	fmt.Println(c)
+	fmt.Println(b)
+	fmt.Println(string(b))
+	fmt.Println(string(b) == s)
+	fmt.Println(a == s)
+	fmt.Println(d == s)
+	fmt.Println([]byte(s))
+	fmt.Println([]byte(d))
+	fmt.Println(utf8.DecodeRuneInString(s))
+	fmt.Println(utf8.DecodeRuneInString(d))
+
+	fmt.Println(strconv.FormatInt(65533, 16))
+
+	var x []byte
+	x = make([]byte, 4)
+	fmt.Println(utf8.EncodeRune(x, 0xfffd))
+	fmt.Println(x)
+	fmt.Println(0xfffd == 65533)
+
+	fmt.Println(unsafe.Sizeof(struct{}{}))
+	fmt.Println(unsafe.Sizeof(true))
+
+}
+
+func stringToDateT() {
+	layout := "2006-01-02 15:04:05"
+	str := "0000-00-00 00:00:00"
+	t, err := time.Parse(layout, str)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(t)
+	fmt.Println(t.Unix())
+}
+
+func timeLocalT() {
+	t, _ := time.ParseInLocation("20060102150405", "20200113104349", time.FixedZone("Asia/Shanghai", 8*60*60))
+	fmt.Println(t.Unix())
+	fmt.Println(time.Unix(t.Unix(), 0))
+}
+
+func fileT() {
+	filePath := "./file1.txt"
+	// fd, err := ioutil.ReadFile(filePath)
+	// if err != nil {
+	//	fmt.Printf("readFile can't open file: %s\n", filePath)
+	//	return
+	// }
+	// fmt.Println(strings.Split(string(fd), "\n"))
+	// fmt.Println([]uint64{8080717372750626869, 8080717373052649480, 8080717372750626869, 8080717372750626869, 8080717373052649480})
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		fmt.Printf("readFile can't create file: %s\n", filePath)
+		return
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	n2, err := w.WriteString("asd\n")
+	if err != nil {
+		fmt.Printf("w.WriteString error: %s\n", err)
+		return
+	}
+	fmt.Println(n2)
+	// w.WriteString("哈哈")
+	err = w.Flush()
+	if err != nil {
+		fmt.Printf("w.Flush error: %s\n", err)
+		return
+	}
+	// w.WriteString("456")
+	// w.WriteString("789")
+	// w.Flush()
+	return
+}
+
+func NewClientT() {
+	c := sdk.NewClient("123", "abc", "http", "sx.api.mengtuiapp.com", 80, 3)
+
+	// GET Request Test
+	fmt.Println("GET /v1/zeus/pap_order/8083848945444372559")
+
+	//
+
+	statusCode, resp := c.Get("/v1/zeus/pap_order/8083848945444372559", "pay_method=0&platform=1", nil)
+
+	fmt.Println("Status Code: " + fmt.Sprint(statusCode))
+	fmt.Println(resp)
+
+	fmt.Println(strings.Repeat("-", 50))
+
+	// curl -H 'Authorization:mm 123:j7td4yUfkIUma4jRiqv0UmCbWKE=' -v http://sx.api.mengtuiapp.com/v1/zeus/pap_order/8083848945444372559?pay_method=0&platform=1
+
+	// // POST Request Test
+	// body := `{"echo":{"int":1,"str":"Hello World","unicode":"你好，世界！","none":null,"boolean":true}}`
+	// fmt.Println("GET /x-admin/echo")
+	// fmt.Println(body)
+	//
+	// statusCode, resp = c.Post("/api/v1/do/echo", "", body, nil)
+	//
+	// fmt.Println("Status Code: " + fmt.Sprint(statusCode))
+	// fmt.Println(resp)
+}
+
+func copyT() {
+	a := []*AA{&AA{x: &BB{x: 1, y: 2}, y: 2}, &AA{x: &BB{x: 1, y: 2}, y: 4}, &AA{x: &BB{x: 1, y: 2}, y: 6}}
+	b := append(a[0:0], a...)
+	fmt.Printf("*%v: %v\n", a, b)
+	fmt.Printf("*%v: %v\n", a[0], b[0])
+	fmt.Printf("*%v: %v\n", a[0].x, b[0].x)
+	fmt.Printf("*%v: %v\n", a[0].x.x, b[0].x.x)
+	a[0].x.x = 11
+	a[0].x.y = 11
+	fmt.Printf("*%v: %v\n", a[0].x.x, b[0].x.x)
+
+	// fmt.Println(string([]byte{}))
+	c := []*CC{&CC{x: BB{x: 1, y: 2}, y: 2}, &CC{x: BB{x: 1, y: 2}, y: 4}, &CC{x: BB{x: 1, y: 2}, y: 6}}
+	d := append(c[0:0], c...)
+	fmt.Printf("%v: %v\n", c, d)
+	fmt.Printf("%v: %v\n", c[0], d[0])
+	fmt.Printf("%v: %v\n", c[0].x, d[0].x)
+	fmt.Printf("%v: %v\n", c[0].x.x, d[0].x.x)
+	c[0].x.x = 11
+	c[0].x.y = 11
+	fmt.Printf("%v: %v\n", c[0].x.x, d[0].x.x)
+}
+func timeLocT() {
+
+	// fmt.Println(time.LoadLocation("Asia/Shanghai"))
+	// fmt.Println(time.LoadLocation("Asia/Chongqing"))
+	// loc, _ := time.LoadLocation("UTC")
+	// loc2, _ := time.LoadLocation("Asia/Shanghai")
+	// fmt.Println(time.Now().In(loc))
+	// fmt.Println(time.Now().In(loc).In(loc2))
+	// BeijingLocation := time.FixedZone("Asia/Shanghai", 8*60*60)
+	// fmt.Println(time.Now().In(loc).In(BeijingLocation))
+	// fmt.Println(time.Now().AddDate(0, 0, -31).Add(+time.Hour * 24 * 3))
+	fmt.Println(time.Now())
+	fmt.Println(time.Unix(1580973299, 0))
+}
+
+func aseT() error {
+	req := ""
+	rb, err := base64.StdEncoding.DecodeString(req)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("rb: %v", rb)
+
+	apiKey := ""
+	h := md5.New()
+	h.Write([]byte(apiKey))
+	keyStar := []byte(fmt.Sprintf("%x", h.Sum(nil)))
+	// 用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
+	_, err = simpleaes.AESDecrypt(rb, keyStar)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type AA struct {
+	x *BB
+	y int64
+}
+
+func (a *AA) add() {
+	if a != nil {
+		fmt.Println("haha a")
+	} else {
+		fmt.Println("haha b")
+	}
+}
+
+type CC struct {
+	x BB
+	y int64
+}
+
+type BB struct {
+	x int64
+	y int64
+}
+
+func nilInCallT() {
+	var a *AA
+	a.add()
+	fmt.Println(a.x)
+}
+
+type FuncT struct {
+	a int64
+}
+
+func (s *FuncT) FuncA(ctx context.Context, b int64) {
+	fmt.Printf("FuncA-> a: %v, b: %v\n", s.a, b)
+	s.a = 10
+	return
+}
+func (s *FuncT) FuncB(ctx context.Context, b int64) {
+	fmt.Printf("FuncB-> a: %v, b: %v\n", s.a, b)
+	s.a = 9
+	return
+}
+
+func funcT() {
+	x := &FuncT{}
+	funcA := x.FuncA
+	funcB := x.FuncB
+	x.a = 3
+
+	funcA(context.Background(), 1) // a: 3, b: 1
+	funcB(context.Background(), 3) // a: 0, b: 3
+	funcA(context.Background(), 1) // a: 10, b: 1
+	funcB(context.Background(), 3) // a: 0, b: 3
+	x.FuncB(context.Background(), 3)
+	funcA(context.Background(), 1) // a: 10, b: 1
+	funcB(context.Background(), 3) // a: 0, b: 3
+
+}
+func JsonPointT() {
+	type A struct {
+		B int64 `json:"b"`
+		C int64 `json:"c"`
+	}
+
+	var s *A
+	jsonStr := `{"b": 1, "c": 2}`
+	err := json.Unmarshal([]byte(jsonStr), &s)
+	if err != nil {
+		// fmt.Println(err)
+		panic(err)
+	}
+	fmt.Println(s)
+
+	var b A
+	jsonStr = `{"b": 1, "c": 2}`
+	err = json.Unmarshal([]byte(jsonStr), &b)
+	if err != nil {
+		// fmt.Println(err)
+		panic(err)
+	}
+	fmt.Println(b)
+
+}
+func InterfaceT(vMap map[uint]uint) {
+	var a interface{}
+	if a == nil {
+		fmt.Println(1)
+	}
+}
+
+func MapNilT(vMap map[uint]uint) {
+	if vMap == nil {
+		fmt.Println("vMap is nil")
+	}
+
+	if v, exist := vMap[1]; exist {
+		fmt.Println(v)
+	} else {
+		fmt.Println("dont existed")
+	}
+}
+
+func GoRoutineT() {
+	go func() {
+		go func() {
+			time.Sleep(5 * time.Second)
+			fmt.Println("1111")
+		}()
+		fmt.Println("2222")
+	}()
+	fmt.Println("3333")
+	time.Sleep(60 * time.Second)
+}
+
+type C int
+type DD C
+
+const name DD = 1
+
+func init() {
+	fmt.Printf("init: %d\n", name)
+}
+
 func main() {
-	//mapT()
-	//arrT()
-	//sprintFT()
-	//mapAdT()
-	//sliceT()
-	//IntT()
-	//v := []int{1,2,3}
-	//fmt.Println(v[:0])
-	//AppendSlice()
-	//ArgsT(1,2,"2",5,"12")
-	//ChanT()
-	//warriorT()
-	//waiterT()
-	//RuntimeStackT()
-	//fmt.Println(gls.GetGoid())
-	//GoidLocalT()
-	//reflectT()
-	//ParseIntT()
-	//mapKeyT()
-	//UrlEncodeT()
+	fmt.Printf("main: %d\n", name)
+	// mapT()
+	// arrT()
+	// sprintFT()
+	// mapAdT()
+	// sliceT()
+	// IntT()
+	// v := []int{1,2,3}
+	// fmt.Println(v[:0])
+	// AppendSlice()
+	// ArgsT(1,2,"2",5,"12")
+	// ChanT()
+	// warriorT()
+	// waiterT()
+	// RuntimeStackT()
+	// fmt.Println(gls.GetGoid())
+	// GoidLocalT()
+	// reflectT()
+	// ParseIntT()
+	// mapKeyT()
+	// UrlEncodeT()
+	// UrlT()
 
-	//var start time.Time
-	//start = time.Now()
-	//fmt.Printf("GoodsReviewList elapsed: %v", time.Now().Sub(start))
+	// var start time.Time
+	// start = time.Now()
+	// fmt.Printf("GoodsReviewList elapsed: %v", time.Now().Sub(start))
 
-	//var a []*int
-	//for i := range a {
+	// var a []*int
+	// for i := range a {
 	//	fmt.Println("1", i)
-	//}
-	//fmt.Println(1)
+	// }
+	// fmt.Println(1)
 
-	//JsonMapInterfaceT()
-	//JsonMapStructT()
-	//regexpT()
-	//bitOrT()
-	//shiftRightLogicalT()
-	//gRpcDebugT()
+	// JsonMapInterfaceT()
+	// JsonMapStructT()
+	// regexpT()
+	// bitOrT()
+	// shiftRightLogicalT()
+	// gRpcDebugT()
 
-	//Authorization4SignT()
-	//NewClientT()
-	//SortSliceT()
-	//DateFormatT()
-	//MapIfT()
-	//NewT()
-	//ContextT()
-	//StringsUtils()
-	//InterfaceJsonT()
-	//ReflectFieldByNameT()
-	//JsonT()
-	//mulChar()
-	//CeilT()
-	//YamlToJSONT()
-	//JsonToYamlT()
-	//SwitchT()
-	//TimeT()
-	//_ = ErrorT()
-	//timeT()
+	// Authorization4SignT()
+	// NewClientT()
+	// SortSliceT()
+	// DateFormatT()
+	// MapIfT()
+	// NewT()
+	// ContextT()
+	// StringsUtils()
+	// InterfaceJsonT()
+	// ReflectFieldByNameT()
+	// JsonT()
+	// mulChar()
+	// CeilT()
+	// YamlToJSONT()
+	// JsonToYamlT()
+	// SwitchT()
+	// TimeT()
+	// _ = ErrorT()
+	// timeT()
 
-	deferT()
+	// deferT()
+	// GoschedT()
+
+	// TimeAddT()
+	// deferPanicT()
+	// fmt.Println(fmt.Sprintf("%d", IEOthers))
+
+	// sliceAppendT()
+	// AtomicT()
+
+	// UnicodeT()
+	// stringToDateT()
+
+	// timeLocalT()
+
+	// fileT()
+
+	// NewClientT()
+
+	// fmt.Println(string([]byte{}))
+
+	// copyT()
+
+	// _ = aseT()
+	// timeLocT()
+
+	// nilInCallT()
+
+	// funcT()
+
+	// JsonPointT()
+	//
+	// var a interface{}
+	// if a == nil {
+	// 	fmt.Println(1)
+	// }
+	// MapNilT(nil)
+
+	// GoRoutineT()
 
 	return
 }
+
+/*
+
+./grpcdebug -data='{"audit_id":"7102968518905217060"}' -addr=127.0.0.1:7401 -method=/ptgold.Service/SucceedBuyMemberV2 {}
+
+
+
+./bin/grpcdebug -data='{"order_id_list": [8085968169885286454,8085937970728714294,8085907771991572534,8085877572784668726,8085847373829423158,8085817174756737078,8085786975918932022,8085756776795914294,8085726577823891510,8085696378818314294,8085666179879845942,8085635980857491510,8085605781868691510,8085575582863114294,8085545383958200374,8085515184919068726,8085484985896714294,8085454786907914294,8085424587952668726,8085394388997423158,8085364189958291510,8085333991086932022,8085283675813494838,8085253460416577590,8085223261679435830,8085193062489309238,8085162863450177590,8085132664427823158,8085102465405468726,8085072266483777590,8085042067746635830,8085011868539732022,8084981669685149750,8084951470746681398,8084921271690772534,8084891072550977590,8084860873813835830,8084830674606932022,8084800475752349750,8084770276763549750,8084740077741195318,8084709878601400374,8084669613232668726,8084639414277423158,8084609215406063670,8084579016299823158,8084548817243914294,8084518618305445942,8084488419316645942,8084458220478840886], "pay_method": 0, "platform": 1}' -addr=127.0.0.1:8001 -method=/pay.Service/QueryPapOrderByIdAndPlatform {}
+./bin/grpcdebug -data='{"order_id_list": [8085968169885286454, 8085937970728714294], "pay_method": 0, "platform": 1}' -addr=127.0.0.1:8001 -method=/pay.Service/QueryPapOrderByIdAndPlatform {}
+
+
+./bin/grpcdebug -data='{"order_id":"8093115279084666964","contract_id":"3479407756872564823","buyer_id":36022487,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+./grpcdebug -data='{"order_id":"8093115279084666965","contract_id":"3440644244788789332","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36024584}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+./grpcdebug -data='{"order_id":"8055290203530641453","contract_id":"3443588436062158893","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36025845}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+test
+./grpcdebug -data='{"order_id":"8055290203530641454","contract_id":"3529009359652700197","buyer_id":36034237,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+./grpcdebug -data='{"order_id":"8055290203530641454","contract_id":"3416017396251541558","buyer_id":36022154,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./grpcdebug -data='{"order_id":"8055290203530641454","contract_id":"3412706730803511393","buyer_id":36018997,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":1,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./bin/grpcdebug -data='{"order_id":"8093115279084666964","contract_id":"3594295742881120284","buyer_id":36022028,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./bin/grpcdebug -data='{"order_id":"8093115279084666968","contract_id":"3594331510110470172","buyer_id":36022028,"client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./grpcdebug -data='{"order_id":"8085968169885286455","contract_id":"3416017396251541558","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36022154}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+./grpcdebug -data='{"order_id":"8085968169885286457","contract_id":"3416017396251541558","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36022154}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+
+./grpcdebug -data='{"order_id":"8120662902481928290","contract_id":"3412706730803511393","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36018997}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+{
+   "order_id": "8093115279084666964",
+   "contract_id": "3440644244788789332",
+   "client_ip": "39.96.164.183",
+   "order_title": "萌推会员自动续费",
+   "order_desc":"萌推会员自动续费",
+   "platform": 2,
+   "order_type": 5,
+   "buyer_id": 36024584
+}
+
+kubectl cp -n ptpay  ./grpcdebug ptpay-5c8c46f676-rpstl:./
+
+
+./bin/grpcdebug -data='{"order_id":"8053955264981811294","contract_id":"3442064127841845248","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform":2,"order_type":5,"buyer_id":36022393}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+8030835391066030116,8031273723097104420,8073433748116455460,8074882477562396708,8076331761562337316,8077780224904871972,8079229502865096740,8080678981916966948,8082128305444257828,8083577986846097444,8085027395920314404,8086477153020968996,8087926537113845796,8089375954442420260,8090825444902862884,8092275312280240164,8093724790728212516,8095174268538601508,8118369205883109412
+
+ 8073433748116455460, 8079270991896789071, 8080704918318547037, 8080717373052649480, 8083586161527832606, 8095180692115193871, 8115473153827897436
+
+
+./bin/grpcdebug -data='{"order_id":"3480833734568099928","contract_id":"3472233166979252304","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform": 1,"order_type":5,"buyer_id":36022480}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./bin/grpcdebug -data='{"order_id":"3479407756872564823","contract_id":"3479407756872564823","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform": 1,"order_type":5,"buyer_id":36022487}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+./bin/grpcdebug -data='{"order_id":"8092522092494372953","contract_id":"3480833734568099928","client_ip":"39.96.164.183","order_title":"萌推会员自动续费","order_desc":"萌推会员自动续费","platform": 1,"order_type":5,"buyer_id":36022488}' -addr=127.0.0.1:8001 -method=/pay.Service/WXPapPayApply {}
+
+106599536,29932779,107799393,107923130,48963208,108234815,29865992
+
+// 订单来源信息;没有进行binding检查，防止参数错误导致下单失败
+{
+	"ref_page_name": "shijiu-test-ref_page_name-1",
+	"ref_page_id": "shijiu-test-ref_page_id-1",
+	"ref_key_param": "shijiu-test-ref_key_param-1",
+	"source_ref_page_name": "shijiu-test-source_ref_page_name-1",
+	"source_ref_page_id": "shijiu-test-source_ref_page_id-1",
+	"source_ref_key_param": "shijiu-test-source_ref_key_param-1",
+    "source_ref_pos_id": "shijiu-test-source_ref_pos_id-1",
+	"activity_id": 662,
+	"extra": {
+		"extra_key_1": "extra_value_1",
+		"extra_key_2": "extra_value_2",
+		"extra_key_3": "extra_value_3",
+	},
+}
+*/

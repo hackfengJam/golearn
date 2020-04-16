@@ -5,8 +5,6 @@ import sys
 import os
 import json
 
-# Author : 青峰<me@heytaoge.com>
-
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 default_port = 80

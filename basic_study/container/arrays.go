@@ -11,7 +11,7 @@ func printArray(arr [5]int) {
 }
 
 func test() {
-	var arr1 [5] int
+	var arr1 [5]int
 	arr2 := [3]int{1, 3, 5}
 	arr3 := [...]int{2, 4, 6, 8, 10}
 
@@ -38,9 +38,9 @@ func test() {
 }
 
 func main() {
-	//test()
+	// test()
 
-	var arr1 [5] int
+	var arr1 [5]int
 	arr3 := [...]int{2, 4, 6, 8, 10}
 	printArray(arr1)
 	printArray(arr3)
