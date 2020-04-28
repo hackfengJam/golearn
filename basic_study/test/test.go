@@ -3,14 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
-	"crypto/md5"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"golearn/basic_study/test/gls"
 	"golearn/basic_study/test/sdk"
-	"golearn/basic_study/test/util/simpleaes"
+	// "golearn/basic_study/test/util/simpleaes"
 	"math"
 	"math/rand"
 	"net/url"
@@ -859,26 +857,41 @@ func TimeAddT() {
 }
 
 func GoschedT() {
-	// go func() {
-	//	fmt.Println(1)
-	//	runtime.Gosched()
-	//	fmt.Println(2)
-	// }()
-	// go func() {
-	//	fmt.Println(3)
-	//	runtime.Gosched()
-	//	fmt.Println(4)
-	// }()
-	// go func() {
-	//	fmt.Println(5)
-	//	runtime.Gosched()
-	//	fmt.Println(6)
-	// }()
-	//
-	// time.Sleep(1 * time.Second)
+	go func() {
+		fmt.Println(1)
+		runtime.Gosched()
+		fmt.Println(2)
+	}()
+	go func() {
+		fmt.Println(3)
+		runtime.Gosched()
+		fmt.Println(4)
+	}()
+	go func() {
+		fmt.Println(5)
+		runtime.Gosched()
+		fmt.Println(6)
+	}()
+	/*
+		    5
+		    1
+		    6
+		    2
+		    3
+		    4
+
+			3
+		    1
+		    4
+		    5
+		    2
+		    6
+	*/
+
+	time.Sleep(1 * time.Second)
 
 	// selectT()
-
+	//
 	// xx := &a{A: -1, B: -2}
 	// fmt.Println(xx)
 	// PointerT(xx)
@@ -1147,25 +1160,25 @@ func timeLocT() {
 	fmt.Println(time.Unix(1580973299, 0))
 }
 
-func aseT() error {
-	req := ""
-	rb, err := base64.StdEncoding.DecodeString(req)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("rb: %v", rb)
-
-	apiKey := ""
-	h := md5.New()
-	h.Write([]byte(apiKey))
-	keyStar := []byte(fmt.Sprintf("%x", h.Sum(nil)))
-	// 用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
-	_, err = simpleaes.AESDecrypt(rb, keyStar)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func aseT() error {
+// 	req := ""
+// 	rb, err := base64.StdEncoding.DecodeString(req)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	fmt.Printf("rb: %v", rb)
+//
+// 	apiKey := ""
+// 	h := md5.New()
+// 	h.Write([]byte(apiKey))
+// 	keyStar := []byte(fmt.Sprintf("%x", h.Sum(nil)))
+// 	// 用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
+// 	_, err = simpleaes.AESDecrypt(rb, keyStar)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 type AA struct {
 	x *BB
@@ -1287,12 +1300,52 @@ type DD C
 
 const name DD = 1
 
-func init() {
-	fmt.Printf("init: %d\n", name)
+func MapNoKeyT() {
+	v := map[int64]int64{1: 2, 3: 4}
+	fmt.Println(v)
+	v[1] += 1
+	v[3] += 1
+	v[2] += 0
+	fmt.Println(v)
+}
+
+func deferArgsT() {
+	a, b := 1, 2
+	defer func(a, b int) {
+		fmt.Printf("have args. a: %d, b: %d\n", a, b)
+	}(a, b)
+	defer func() {
+		fmt.Printf("no args. a: %d, b: %d\n", a, b)
+	}()
+
+	a = 3
+	b = 4
+}
+
+func WaitGroupT() {
+	var wg *sync.WaitGroup
+	wg = &sync.WaitGroup{}
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			defer gls.Clean()
+
+			defer func() {
+				fmt.Printf("%d: number = %d\n", idx, gls.Get("number"))
+			}()
+			gls.Put("number", idx+100)
+		}(i)
+	}
+	fmt.Println(wg)
+	wg.Wait()
+	fmt.Println(wg)
 }
 
 func main() {
-	fmt.Printf("main: %d\n", name)
+
+	// fmt.Printf("main: %d\n", name)
+
 	// mapT()
 	// arrT()
 	// sprintFT()
@@ -1314,24 +1367,20 @@ func main() {
 	// mapKeyT()
 	// UrlEncodeT()
 	// UrlT()
-
 	// var start time.Time
 	// start = time.Now()
 	// fmt.Printf("GoodsReviewList elapsed: %v", time.Now().Sub(start))
-
 	// var a []*int
 	// for i := range a {
 	//	fmt.Println("1", i)
 	// }
 	// fmt.Println(1)
-
 	// JsonMapInterfaceT()
 	// JsonMapStructT()
 	// regexpT()
 	// bitOrT()
 	// shiftRightLogicalT()
 	// gRpcDebugT()
-
 	// Authorization4SignT()
 	// NewClientT()
 	// SortSliceT()
@@ -1351,48 +1400,40 @@ func main() {
 	// TimeT()
 	// _ = ErrorT()
 	// timeT()
-
 	// deferT()
 	// GoschedT()
-
 	// TimeAddT()
 	// deferPanicT()
 	// fmt.Println(fmt.Sprintf("%d", IEOthers))
-
 	// sliceAppendT()
 	// AtomicT()
-
 	// UnicodeT()
 	// stringToDateT()
-
 	// timeLocalT()
-
 	// fileT()
-
 	// NewClientT()
-
 	// fmt.Println(string([]byte{}))
-
 	// copyT()
-
 	// _ = aseT()
 	// timeLocT()
-
 	// nilInCallT()
-
 	// funcT()
-
 	// JsonPointT()
-	//
 	// var a interface{}
 	// if a == nil {
 	// 	fmt.Println(1)
 	// }
 	// MapNilT(nil)
-
 	// GoRoutineT()
+	// deferArgsT()
 
+	// WaitGroupT()
+	GoschedT()
 	return
+}
+
+func init() {
+	// fmt.Printf("init: %d\n", name)
 }
 
 /*
