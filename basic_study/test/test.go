@@ -24,8 +24,6 @@ import (
 	"time"
 	"unicode/utf8"
 	"unsafe"
-
-	"gopkg.in/yaml.v2"
 )
 
 type UserProfileInfo map[string]interface{}
