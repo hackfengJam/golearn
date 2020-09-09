@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"golearn/project/rbac/router"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {

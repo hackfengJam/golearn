@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"golearn/queue"
+	"golearn/basic_study/queue"
 )
 
 func main() {

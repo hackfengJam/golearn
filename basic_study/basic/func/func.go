@@ -50,7 +50,8 @@ func sum(numbers ...int) int {
 }
 
 func swap(a, b *int) {
-	*b, *a = *b, *a
+	// *b, *a = *b, *a
+	*b, *a = *a, *b
 }
 
 func main() {
@@ -62,7 +63,6 @@ func main() {
 	//fmt.Println(apply(func(a, b int) int {
 	//	return int(math.Pow(float64(a), float64(b)))
 	//}, 3, 4))
-
 	a, b := 3, 4
 	swap(&a, &b)
 	fmt.Println(a, b)

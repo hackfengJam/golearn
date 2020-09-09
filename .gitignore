@@ -1,0 +1,71 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+test.go
+# Folders
+_obj
+_test
+/bin/
+/pkg/
+/run/
+/log/
+
+# vim
+[._]*.s[a-w][a-z]
+
+_Dockerfile*
+k8s-deploy/_gen*
+# Architecture specific extensions/prefixes
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+Makefile.linux
+dump.rdb
+
+*.exe
+*.test
+*.prof
+*.pyc
+*.log
+
+#mac os
+.DS_Store
+
+#IDEA
+.idea
+
+# swagger spec
+swagger.json
+swagger.yml
+
+# vscode
+.vscode
+
+node_modules/
+
+Procfile*
+!Procfile.example
+.env
+docker-compose.yml
+
+nohup.out
+abexp.json
+
+reference/
+
+#direnv
+.envrc
+
+#gitbook
+_book
+node_modules/
+
+.python-version
+.venv
+
+tmp*

@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"golearn/retriever/mock"
-	"golearn/retriever/real"
+	"golearn/basic_study/retriever/mock"
 	"time"
 )
 
