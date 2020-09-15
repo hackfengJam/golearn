@@ -1,1 +1,5 @@
-package systemcall
+package main
+
+func main() {
+
+}
