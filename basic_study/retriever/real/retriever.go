@@ -1,4 +1,4 @@
-package real
+package ireal
 
 import (
 	"net/http"

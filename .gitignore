@@ -63,6 +63,7 @@ reference/
 #gitbook
 _book
 node_modules/
+basic_study/testignore
 
 .python-version
 .venv

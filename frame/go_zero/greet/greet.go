@@ -12,7 +12,7 @@ import (
 
 var configFile = flag.String("f", "etc/greet-api.json", "the config file")
 
-func main() {
+func main(){
 	flag.Parse()
 
 	var c config.Config

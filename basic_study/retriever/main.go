@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"golearn/basic_study/retriever/mock"
+	ireal "golearn/basic_study/retriever/real"
 	"time"
 )
 
@@ -46,25 +47,25 @@ func main() {
 	retriever := mock.Retriever{"this is a fack hackfun.com"}
 	inspect(&retriever)
 
-	r = &real.Retriever{
+	r = &ireal.Retriever{
 		UserAgent: "Mozilla/5.0",
 		TimeOut:   time.Minute,
 	}
 	inspect(r)
 
 	// Type assertion
-	//mockRetriever := r.(mock.Retriever)
-	//fmt.Println(mockRetriever.Contents)
+	// mockRetriever := r.(mock.Retriever)
+	// fmt.Println(mockRetriever.Contents)
 	if mockRetriever, ok := r.(*mock.Retriever); ok {
 		fmt.Println(mockRetriever.Contents)
 	} else {
 		fmt.Println("not a mock retriever")
 	}
 
-	//realRetriever := r.(*real.Retriever)
-	//fmt.Println(realRetriever.TimeOut)
+	// realRetriever := r.(*real.Retriever)
+	// fmt.Println(realRetriever.TimeOut)
 
-	//fmt.Println(download(r))
+	// fmt.Println(download(r))
 
 	fmt.Println("Try a session")
 	fmt.Println(session(&retriever))
@@ -77,7 +78,7 @@ func inspect(r Retriever) {
 	switch v := r.(type) {
 	case *mock.Retriever:
 		fmt.Println("Contents:", v.Contents)
-	case *real.Retriever:
+	case *ireal.Retriever:
 		fmt.Println("UserAgent:", v.UserAgent)
 	}
 }

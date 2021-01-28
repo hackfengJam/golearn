@@ -25,8 +25,6 @@ import (
 	"time"
 	"unicode/utf8"
 	"unsafe"
-
-	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -95,7 +93,6 @@ func main() {
 	// sliceAppendT()
 	// AtomicT()
 	// UnicodeT()
-	// stringToDateT()
 	// timeLocalT()
 	// fileT()
 	// NewClientT()
@@ -143,13 +140,106 @@ func main() {
 
 	// chanGoT()
 
-	ListNodeT()
+	// ListNodeT()
+
+	// deferReturnT()
+
+	// fmt.Printf("haha%shaha\n", strings.TrimSpace(" a b c  "))
+	// fmt.Printf("haha%shaha\n", strings.TrimRight(" a b c  ccc", "c"))
+	// fmt.Printf("haha%shaha\n", strings.TrimSuffix(" a b c  ccc", "c"))
+	// TimeStr2TimeT()
+
+	// timeSubT(2020, 12, 14)
+
+	// fmt.Println(strings.TrimPrefix("aaa", "a"))
+
+	// jsonMarshalT()
+
+	// fmt.Println(time.Unix(0, 0))
+	// stringToDateT()
+
+	// now, err := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	// fmt.Println(err)
+	// fmt.Println(now)
 
 	return
 }
 
+type TripleTuple struct {
+	Key       string
+	Operation string
+	Value     interface{}
+}
+
+func jsonMarshalT() {
+	conditionIf := [][]interface{}{}
+	ttList := []TripleTuple{
+		{
+			Key:       "a",
+			Operation: "=",
+			Value:     "1",
+		},
+		{
+			Key:       "b",
+			Operation: ">=",
+			Value:     2,
+		},
+		{
+			Key:       "c",
+			Operation: "<=",
+			Value:     3,
+		},
+	}
+	for _, tt := range ttList {
+		conditionIf = append(conditionIf, []interface{}{tt.Key, tt.Operation, tt.Value})
+	}
+	conditionJSON, err := json.Marshal(conditionIf)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("conditionJSON: %s\n", string(conditionJSON))
+	return
+}
+
+func timeSubT(year int, month time.Month, day int) {
+	t := time.Date(year, month, day, 0, 0, 0, 0, BeijingLocation)
+	fmt.Println(math.Ceil(t.Sub(time.Now()).Hours() / 24))
+}
+
+var BeijingLocation = time.FixedZone("Asia/Shanghai", 8*60*60)
+
+func TimeStr2TimeT() {
+	layoutISO := "2006-01-02"
+	layoutISO = "2006-01-02T15:04:05Z07:00"
+	layoutISO = "2006-01-02 15:04:05"
+	t, err := time.ParseInLocation(layoutISO, "2019-04-02 19:26:24.789", BeijingLocation)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(t)
+}
+
+func deferReturnT2() (int, bool) {
+	fmt.Printf("deferReturnT2: %p\n", deferReturnT2)
+	return 1, false
+}
+
+func deferReturnT1() (int, bool) {
+	defer func() {
+		fmt.Printf("deferReturnT1: %p\n", deferReturnT1)
+	}()
+	return deferReturnT2()
+}
+
+func deferReturnT() {
+	deferReturnT1()
+}
+
 type ListNode struct {
-	Val  int
+	Val  int32
+	Val2 int32
 	Next *ListNode
 }
 
@@ -172,6 +262,8 @@ func ListNodeT1() {
 	fmt.Println(node)
 	fmt.Printf("ListNodeT1 %p\n", &temp)
 	fmt.Println(temp)
+	fmt.Println(node == temp)
+	fmt.Println(&node == &temp)
 }
 
 func ListNodeT2() {
@@ -186,6 +278,8 @@ func ListNodeT2() {
 	fmt.Println(node)
 	fmt.Printf("ListNodeT2 %p\n", &temp)
 	fmt.Println(temp)
+	fmt.Println(node == temp)
+	fmt.Println(&node == &temp)
 }
 
 func ListNodeT() {
@@ -877,21 +971,21 @@ Services2:
         SupplierOrderCode: 111111
 `
 
-func YamlToJSONT() {
-	fmt.Printf("Input: %s\n", s)
-	var body interface{}
-	if err := yaml.Unmarshal([]byte(s), &body); err != nil {
-		panic(err)
-	}
-
-	body = convert(body)
-
-	if b, err := json.Marshal(body); err != nil {
-		panic(err)
-	} else {
-		fmt.Printf("Output: %s\n", b)
-	}
-}
+// func YamlToJSONT() {
+// 	fmt.Printf("Input: %s\n", s)
+// 	var body interface{}
+// 	if err := yaml.Unmarshal([]byte(s), &body); err != nil {
+// 		panic(err)
+// 	}
+//
+// 	body = convert(body)
+//
+// 	if b, err := json.Marshal(body); err != nil {
+// 		panic(err)
+// 	} else {
+// 		fmt.Printf("Output: %s\n", b)
+// 	}
+// }
 
 type jsonTT struct {
 	GRPC       string `json:",omitempty"`
